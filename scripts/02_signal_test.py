@@ -146,7 +146,7 @@ log("")
 log("Next step: see `scripts/03_alternative_targets.py` for targets where signal *does* exist.")
 
 # ---- Save markdown + plot ----
-(ROOT / "reports" / "signal_findings.md").write_text("\n".join(lines))
+(ROOT / "reports" / "signal_findings.md").write_text("\n".join(lines), encoding="utf-8")
 print(f"\n[saved] reports/signal_findings.md")
 
 # Visual summary
