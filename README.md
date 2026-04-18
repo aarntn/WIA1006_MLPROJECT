@@ -82,7 +82,9 @@ Synthetic data, balanced across classes, no missing values.
 
 ## Key findings (once you've run the scripts)
 
-- `match_outcome` is statistically independent of every feature (see `02_signal_test.py`)
+- No practically useful predictive signal for `match_outcome` was found (see `02_signal_test.py`)
+- Any isolated univariate significance is weak and does not translate to generalizable predictive performance
+- Model-level evidence (chance-level test performance) is the final criterion for the conclusion
 - All classifiers converge to the 10% random baseline on the 10-class problem
 - `likes_received` correlates 0.21 with `mutual_matches` — only non-trivial pairwise signal in the data
 - Regression on `mutual_matches` from behavioral features yields R² ≈ 0.13 — modest but real
