@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# Data artifacts (keep raw/, ignore processed outputs)
+data/processed/*
+!data/processed/.gitkeep
+
+# Models
+models/*.pkl
+models/*.joblib
+!models/.gitkeep
+
+# Reports (keep structure, ignore generated outputs)
+reports/figures/*.png
+reports/figures/*.pdf
+reports/figures/*.svg
+!reports/figures/.gitkeep
+reports/signal_findings.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
