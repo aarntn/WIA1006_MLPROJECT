@@ -1,13 +1,13 @@
-# Signal Findings — `match_outcome` Prediction
+# Signal Findings — `match_outcome` prediction
 
-**Dataset:** 50,000 rows × 25 columns  
-**Target:** `match_outcome` (10 classes, balanced)  
-**Random baseline:** 0.100
+Dataset: 50000 rows × 25 cols
+Target: `match_outcome` (10 classes, balanced)
+Random baseline: 0.100
 
-## 1. Chi-square Tests (Categorical Features vs Target)
+## 1. Chi-square tests (categorical features vs target)
 
 | Feature | chi² | dof | p-value | Significant? |
-|---|---:|---:|---:|:---:|
+|---|---|---|---|---|
 | `gender` | 69.85 | 45 | 0.0102 | ✅ |
 | `sexual_orientation` | 80.44 | 63 | 0.0684 | ❌ |
 | `location_type` | 29.30 | 45 | 0.9662 | ❌ |
@@ -20,10 +20,10 @@
 | `body_type` | 41.87 | 45 | 0.6055 | ❌ |
 | `relationship_intent` | 40.56 | 45 | 0.6604 | ❌ |
 
-## 2. ANOVA (Numeric Features Across Outcome Groups)
+## 2. ANOVA (numeric features across outcome groups)
 
 | Feature | F-stat | p-value | Significant? |
-|---|---:|---:|:---:|
+|---|---|---|---|
 | `app_usage_time_min` | 0.655 | 0.7506 | ❌ |
 | `swipe_right_ratio` | 1.446 | 0.1621 | ❌ |
 | `likes_received` | 0.777 | 0.6374 | ❌ |
@@ -37,43 +37,36 @@
 | `height_cm` | 1.377 | 0.1920 | ❌ |
 | `weight_kg` | 1.628 | 0.1009 | ❌ |
 
-## 3. Model Sanity Check — 10-Class Classification
+## 3. Model sanity check — 10-class classification
 
-**Random baseline:** 0.100
+Random baseline: 0.100
 
-| Model | Train Accuracy | Test Accuracy |
-|---|---:|---:|
+| Model | Train acc | Test acc |
+|---|---|---|
 | Logistic Regression | 0.111 | 0.097 |
-| Random Forest (100 trees) | 1.000 | 0.100 |
-| Gradient Boosting (50 estimators) | 0.191 | 0.104 |
+| Random Forest (100) | 1.000 | 0.100 |
+| Gradient Boosting (50) | 0.191 | 0.104 |
 
-## 4. 3-Class Reformulation (Negative / Neutral / Positive)
+## 4. 3-class reformulation (Negative / Neutral / Positive)
 
-**Majority-class baseline:** 0.401
+Majority-class baseline: 0.401
 
-| Model | Train Accuracy | Test Accuracy |
-|---|---:|---:|
+| Model | Train acc | Test acc |
+|---|---|---|
 | Logistic Regression | 0.406 | 0.405 |
-| Random Forest (100 trees) | 1.000 | 0.393 |
-| Gradient Boosting (50 estimators) | 0.455 | 0.402 |
+| Random Forest (100) | 1.000 | 0.393 |
+| Gradient Boosting (50) | 0.455 | 0.402 |
 
 ## Summary
 
-- **1/11** categorical features show nominal significance at `p < 0.05`
-- **0/12** numeric features show significant differences across outcome groups
-- All tested models perform at or near baseline
-- Random Forest shows a large train–test gap (`train ≈ 1.0`, `test ≈ 0.1`), which is a classic overfitting-on-noise pattern
+- **1/11** categorical features show significant association with target (p < 0.05)
+- **0/12** numeric features show significant differences across outcomes
+- All models converge to ~random baseline
+- Random Forest train/test gap (train≈1.0 / test≈0.1) is the classic no-signal fingerprint
 
-## Conclusion
+**Conclusion:** No practically useful predictive signal for `match_outcome` was found.
+Any isolated univariate significance is weak and does not translate to generalizable predictive performance.
+Model-level evidence (chance-level test performance) is the final criterion for this conclusion.
+The dataset is synthetic and labels were assigned independently of features.
 
-- No practically useful predictive signal for `match_outcome` was found.
-- Any isolated univariate significance is weak and does not translate to generalizable predictive performance.
-- Model-level evidence, especially chance-level test performance, supports rejecting `match_outcome` as a main supervised target.
-
-## Interpretation
-
-Although one categorical feature (`gender`) reached nominal significance, this isolated result is not enough to support meaningful predictability, especially given the broader pattern of non-significant tests and near-chance model performance. A more defensible conclusion is that **`match_outcome` is not practically learnable from the provided features**.
-
-## Next Step
-
-See `scripts/03_alternative_targets.py` for targets where signal *does* exist.
+Next step: see `scripts/03_alternative_targets.py` for targets where signal *does* exist.
