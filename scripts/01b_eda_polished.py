@@ -419,7 +419,190 @@ fig.tight_layout()
 save(fig, "06_means_by_outcome")
 
 
+# =====================================================================
+# PLOT 7/8 — Rule-based engagement segments + emoji profile
+# =====================================================================
+# Create 4 disjoint, human-readable behavioral segments from existing labels
+segment_conditions = [
+    (
+        (df["app_usage_time_label"].isin(["Addicted", "Extreme User"]))
+        & (df["swipe_right_label"].isin(["Optimistic", "Swipe Maniac"]))
+        & (df["relationship_intent"].eq("Serious Relationship")),
+        "Heavy swipers, serious",
+    ),
+    (
+        (df["app_usage_time_label"].isin(["Addicted", "Extreme User"]))
+        & (df["swipe_right_label"].eq("Choosy"))
+        & (df["relationship_intent"].isin(["Serious Relationship", "Exploring"])),
+        "Heavy users, choosy",
+    ),
+    (
+        (df["app_usage_time_label"].isin(["Moderate", "High"]))
+        & (df["swipe_right_label"].eq("Balanced"))
+        & (df["relationship_intent"].isin(["Casual Dating", "Exploring"])),
+        "Balanced casuals",
+    ),
+    (
+        (df["app_usage_time_label"].isin(["Barely", "Very Low", "Low"]))
+        & (df["swipe_right_label"].isin(["Balanced", "Choosy"]))
+        & (df["relationship_intent"].isin(["Friends Only", "Networking"])),
+        "Low-activity social",
+    ),
+]
+
+df["engagement_segment"] = "Other"
+for condition, label in segment_conditions:
+    df.loc[(df["engagement_segment"] == "Other") & condition, "engagement_segment"] = label
+
+segment_order = [label for _, label in segment_conditions]
+seg_df = df[df["engagement_segment"].isin(segment_order)].copy()
+
+# Emoji usage profile buckets
+emoji_bins = [-0.01, 0.33, 0.66, 1.00]
+emoji_labels = ["Low emoji", "Medium emoji", "High emoji"]
+seg_df["emoji_profile"] = pd.cut(
+    seg_df["emoji_usage_rate"], bins=emoji_bins, labels=emoji_labels, include_lowest=True
+)
+
+segment_summary = (
+    seg_df.groupby("engagement_segment")
+    .agg(
+        sample_size=("engagement_segment", "size"),
+        median_likes_received=("likes_received", "median"),
+        median_mutual_matches=("mutual_matches", "median"),
+        median_message_sent_count=("message_sent_count", "median"),
+        median_emoji_usage_rate=("emoji_usage_rate", "median"),
+    )
+    .reindex(segment_order)
+)
+
+emoji_profile_pct = (
+    seg_df.groupby(["engagement_segment", "emoji_profile"], observed=False)
+    .size()
+    .unstack(fill_value=0)
+    .reindex(segment_order)
+)
+emoji_profile_pct = emoji_profile_pct.div(emoji_profile_pct.sum(axis=1), axis=0) * 100
+
+print("\n" + "=" * 70)
+print("Rule-based engagement segments (4 disjoint segments)")
+print("=" * 70)
+print(segment_summary.round(2).to_string())
+print("\nEmoji usage profile (% within segment):")
+print(emoji_profile_pct.round(1).to_string())
+
+# ---- grouped bar plot: medians + sample size ----
+metrics_plot = segment_summary[
+    ["median_likes_received", "median_mutual_matches", "median_message_sent_count"]
+].reset_index()
+metrics_long = metrics_plot.melt(
+    id_vars="engagement_segment",
+    var_name="metric",
+    value_name="median_value",
+)
+metric_name_map = {
+    "median_likes_received": "Likes received",
+    "median_mutual_matches": "Mutual matches",
+    "median_message_sent_count": "Messages sent",
+}
+metrics_long["metric"] = metrics_long["metric"].map(metric_name_map)
+
+fig, (ax1, ax2) = plt.subplots(
+    2, 1, figsize=(13, 9), gridspec_kw={"height_ratios": [2.2, 1]}
+)
+sns.barplot(
+    data=metrics_long,
+    x="engagement_segment",
+    y="median_value",
+    hue="metric",
+    palette=[COL_PRIMARY, COL_HIGHLIGHT, COL_ACCENT],
+    ax=ax1,
+)
+ax1.set_title("Segment medians across engagement outcomes")
+ax1.set_xlabel("")
+ax1.set_ylabel("Median value")
+ax1.tick_params(axis="x", rotation=15)
+ax1.legend(title="")
+ax1.grid(axis="y", alpha=0.3)
+
+sample_sizes = segment_summary["sample_size"].reset_index()
+sns.barplot(
+    data=sample_sizes,
+    x="engagement_segment",
+    y="sample_size",
+    color=COL_MUTED,
+    ax=ax2,
+)
+ax2.set_title("Sample size by segment")
+ax2.set_xlabel("Segment")
+ax2.set_ylabel("Users")
+ax2.tick_params(axis="x", rotation=15)
+ax2.grid(axis="y", alpha=0.3)
+
+for p in ax2.patches:
+    ax2.annotate(
+        f"{int(p.get_height()):,}",
+        (p.get_x() + p.get_width() / 2, p.get_height()),
+        ha="center",
+        va="bottom",
+        fontsize=8,
+        xytext=(0, 3),
+        textcoords="offset points",
+    )
+
+fig.tight_layout()
+save(fig, "07_segment_grouped_bars")
+
+# ---- boxplots + emoji stacked bars ----
+fig, (ax1, ax2) = plt.subplots(
+    1, 2, figsize=(14, 5.5), gridspec_kw={"width_ratios": [1.5, 1]}
+)
+sns.boxplot(
+    data=seg_df,
+    x="engagement_segment",
+    y="message_sent_count",
+    order=segment_order,
+    showfliers=False,
+    color=COL_PRIMARY,
+    ax=ax1,
+)
+ax1.set_title("Message volume distribution by segment")
+ax1.set_xlabel("Segment")
+ax1.set_ylabel("message_sent_count")
+ax1.tick_params(axis="x", rotation=15)
+ax1.grid(axis="y", alpha=0.3)
+
+emoji_profile_pct.plot(
+    kind="bar",
+    stacked=True,
+    color=[COL_MUTED, COL_HIGHLIGHT, COL_ACCENT],
+    edgecolor="white",
+    ax=ax2,
+)
+ax2.set_title("Emoji usage profile by segment")
+ax2.set_xlabel("Segment")
+ax2.set_ylabel("Percent within segment")
+ax2.tick_params(axis="x", rotation=15)
+ax2.legend(title="", loc="upper right")
+ax2.set_ylim(0, 100)
+ax2.grid(axis="y", alpha=0.3)
+
+fig.tight_layout()
+save(fig, "08_segment_boxplot_emoji_profile")
+
+# ---- short textual insight block ----
+top_messages = segment_summary["median_message_sent_count"].idxmax()
+top_matches = segment_summary["median_mutual_matches"].idxmax()
+top_likes = segment_summary["median_likes_received"].idxmax()
+low_messages = segment_summary["median_message_sent_count"].idxmin()
+
+print("\nSegment insights:")
+print(f"- Highest median messages: {top_messages}")
+print(f"- Highest median mutual matches: {top_matches}")
+print(f"- Highest median likes received: {top_likes}")
+print(f"- Lowest median messages (least engaged): {low_messages}")
+
 print()
 print("=" * 70)
-print(f"Done. 6 polished plots saved to: {FIGDIR.relative_to(ROOT)}")
+print(f"Done. 8 polished plots saved to: {FIGDIR.relative_to(ROOT)}")
 print("=" * 70)
