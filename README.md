@@ -1,99 +1,125 @@
 # Swipe Atlas
 
-WIA1006 / WID3006 Machine Learning — Group Assignment, Sem 2 2025/2026
+WIA1006 / WID3006 Machine Learning - Group Assignment, Sem 2 2025/2026  
 Universiti Malaya, FCSIT
 
-A behavioral segmentation + engagement analysis project on a synthetic dating-app dataset. Not a match-outcome predictor — the data doesn't support that. See `reports/signal_findings.md` after running the scripts.
+Swipe Atlas is an engagement prediction and behavioral segmentation project on a synthetic dating-app dataset. The final story is intentionally honest: `match_outcome` is not practically predictable from this dataset, so the scored ML core focuses on leakage-aware `mutual_matches` regression and user segmentation.
+
+Professor-ready proposal: `reports/project_proposal.md`
 
 ## Team
 
-- Aaron — [role]
-- [teammate] — [role]
+- Aaron - [role]
+- [teammate] - [role]
 
-## What this project does
+## What This Project Does
 
-Three pillars:
+1. **EDA and data quality audit** - distributions, missing values, class balance, correlations, PCA structure, and synthetic-data fingerprints.
+2. **No-signal target check** - statistical tests and classifiers show that `match_outcome` stays near random baseline.
+3. **Engagement prediction** - supervised regression predicts `mutual_matches` using a leakage-safe feature set.
+4. **User segmentation** - unsupervised clustering groups users into behavioral archetypes.
+5. **Interactive dashboard** - Streamlit app for prediction, segment exploration, and model evidence.
 
-1. **Segmentation** — unsupervised clustering of users into dater archetypes
-2. **Engagement prediction** — supervised regression on `mutual_matches` / `likes_received`
-3. **Null-result documentation** — explicit, honest reporting that `match_outcome` is not predictable from the features in this dataset
+## Project Structure
 
-Plus a Streamlit app (`app/`) exposing the above interactively.
-
-## Project structure
-
-```
+```text
 swipe-atlas/
-├── data/
-│   ├── raw/                    # original CSVs (checked in, small enough)
-│   └── processed/              # engineered features, cleaned data (gitignored)
-├── notebooks/                  # for final submission .ipynb
-├── scripts/
-│   ├── 01_eda.py              # distributions, missing values, summaries
-│   ├── 02_signal_test.py      # chi-square / ANOVA / model sanity checks
-│   └── 03_alternative_targets.py  # engagement regression, where signal exists
-├── src/                       # reusable modules imported by scripts
-│   ├── data.py                # load / cache dataset
-│   └── preprocessing.py       # encoders, feature engineering
-├── app/                       # Streamlit app (built later)
-├── reports/
-│   ├── figures/               # saved plots
-│   └── signal_findings.md     # generated summary of signal tests
-├── models/                    # trained model artifacts (.pkl)
-├── requirements.txt
-└── README.md
+|-- app/
+|   `-- streamlit_app.py
+|-- data/
+|   |-- raw/
+|   `-- processed/
+|-- models/
+|-- notebooks/
+|   `-- Swipe_Atlas_Final_Workflow.ipynb
+|-- reports/
+|   |-- project_proposal.md
+|   `-- figures/
+|-- scripts/
+|   |-- 01_eda.py
+|   |-- 02_signal_test.py
+|   |-- 03_alternative_targets.py
+|   |-- 04_train_engagement_models.py
+|   `-- 05_segmentation.py
+|-- src/
+|   |-- data.py
+|   |-- features.py
+|   `-- preprocessing.py
+`-- requirements.txt
 ```
 
 ## Setup
 
 ```bash
-# 1. Clone and enter
-git clone <repo-url>
-cd swipe-atlas
-
-# 2. Create virtual environment
 python -m venv venv
-source venv/bin/activate     # on Windows: venv\Scripts\activate
-
-# 3. Install dependencies
+venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Running
+## Run The Full Workflow
 
-From the project root, in order:
+From the project root:
 
 ```bash
-python scripts/01_eda.py              # basic EDA, saves plots to reports/figures/
-python scripts/02_signal_test.py      # statistical + model-based signal tests
-python scripts/03_alternative_targets.py   # regression on mutual_matches
+python scripts/01_eda.py
+python scripts/02_signal_test.py
+python scripts/04_train_engagement_models.py
+python scripts/05_segmentation.py
+streamlit run app/streamlit_app.py
 ```
 
-Each script is self-contained and prints a summary to stdout. Plots and artifacts go to `reports/figures/`.
+Fast local smoke tests:
+
+```bash
+python scripts/04_train_engagement_models.py --fast
+python scripts/05_segmentation.py --fast
+```
+
+## Modeling Design
+
+Official target: `mutual_matches`
+
+Leakage-safe rules:
+
+- Exclude `match_outcome` from engagement models.
+- Exclude `likes_received` from the official `mutual_matches` model because it is a paired engagement outcome.
+- Keep a separate paired-feature comparison to show how leakage inflates performance.
+
+Models compared:
+
+- Dummy mean baseline
+- Ridge
+- ElasticNet
+- Poisson Regressor
+- Random Forest Regressor
+- Gradient Boosting Regressor
+- HistGradientBoosting Regressor
+- XGBoost Regressor, when available
+
+Auto-sklearn:
+
+- Use the final notebook's Colab/Linux-only cell for the required auto-sklearn comparison.
+- The local Windows/Python 3.12 repo remains sklearn-first for compatibility.
+
+## Key Outputs
+
+- `reports/eda_findings.md`
+- `reports/project_proposal.md`
+- `reports/signal_findings.md`
+- `reports/engagement_model_results.csv`
+- `reports/engagement_summary.md`
+- `reports/segmentation_summary.csv`
+- `reports/segmentation_findings.md`
+- `models/best_mutual_matches_model.joblib`
+- `models/kmeans_segmentation.joblib`
+
+Generated models, processed data, and figures are ignored by git but reproducible from the scripts.
 
 ## Data
 
-Source: [Kaggle — Dating App Behavior Dataset](https://www.kaggle.com/datasets/keyushnisar/dating-app-behavior-dataset)
+Source: [Kaggle - Dating App Behavior Dataset](https://www.kaggle.com/datasets/keyushnisar/dating-app-behavior-dataset)
 
-- `dating_app_behavior_dataset.csv` — original, 50,000 rows × 19 cols
-- `dating_app_behavior_dataset_extended1.csv` — same rows, +6 cols (age, height, weight, zodiac, body type, relationship intent)
+- `dating_app_behavior_dataset.csv` - original 50,000 rows x 19 columns
+- `dating_app_behavior_dataset_extended1.csv` - extended 50,000 rows x 25 columns
 
-Synthetic data, balanced across classes, no missing values.
-
-## Key findings (once you've run the scripts)
-
-- No practically useful predictive signal for `match_outcome` was found (see `02_signal_test.py`)
-- Any isolated univariate significance is weak and does not translate to generalizable predictive performance
-- Model-level evidence (chance-level test performance) is the final criterion for the conclusion
-- All classifiers converge to the 10% random baseline on the 10-class problem
-- `likes_received` correlates 0.21 with `mutual_matches` — only non-trivial pairwise signal in the data
-- Regression on `mutual_matches` from behavioral features yields R² ≈ 0.13 — modest but real
-
-## Timeline
-
-- **Weeks 1–2** — EDA, preprocessing, initial clustering
-- **Weeks 3–4** — Finalize clustering, train supervised models, tune
-- **Week 5** — Auto-sklearn comparison, report phases 1–3
-- **Week 6** — Streamlit app
-- **Week 7** — Slides, video, polish
-- **Week 8** — Buffer + submit (deadline: June 8, 12:00pm)
+The dataset is synthetic, balanced across `match_outcome`, and has no missing values.
