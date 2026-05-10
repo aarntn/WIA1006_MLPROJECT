@@ -39,31 +39,7 @@ REPORTS_DIR = ROOT / "reports"
 FIGDIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-# plotting helpers (inlined so no src.plotting dependency)
-COL_PRIMARY = "#4C72B0"
-COL_ACCENT = "#DD8452"
-COL_HIGHLIGHT = "#C44E52"
-COL_MUTED = "#9AA1A9"
-COL_GOOD = "#55A868"
-
-
-def setup_plot_style() -> None:
-    sns.set_theme(style="whitegrid", context="talk")
-    plt.rcParams["figure.dpi"] = 110
-    plt.rcParams["savefig.dpi"] = 140
-    plt.rcParams["axes.titleweight"] = "bold"
-    plt.rcParams["axes.titlesize"] = 12
-    plt.rcParams["axes.labelsize"] = 10
-    plt.rcParams["xtick.labelsize"] = 9
-    plt.rcParams["ytick.labelsize"] = 9
-
-
-def save_fig(fig, name: str, out_dir: Path) -> None:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(out_dir / f"{name}.png", bbox_inches="tight")
-    plt.close(fig)
-    print(f"  [saved] {name}.png")
+from src.plotting import COL_ACCENT, COL_GOOD, COL_HIGHLIGHT, COL_MUTED, COL_PRIMARY, save_fig, setup_plot_style
 
 
 setup_plot_style()

@@ -35,7 +35,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
     GradientBoostingRegressor,
@@ -65,34 +64,7 @@ MODELS_DIR = ROOT / "models"
 TARGET_COL = "mutual_matches"
 PAIRED_COL = "likes_received"
 
-COL_PRIMARY = "#2E5C8A"
-COL_ACCENT = "#C44E52"
-COL_MUTED = "#8FA8C4"
-COL_HIGHLIGHT = "#E8A33D"
-COL_GOOD = "#55A868"
-
-
-def setup_plot_style() -> None:
-    sns.set_theme(style="whitegrid", context="notebook")
-    plt.rcParams.update(
-        {
-            "figure.dpi": 140,
-            "savefig.dpi": 150,
-            "axes.titleweight": "bold",
-            "axes.titlesize": 12,
-            "axes.labelsize": 10,
-            "xtick.labelsize": 9,
-            "ytick.labelsize": 9,
-        }
-    )
-
-
-def save_fig(fig, name: str) -> None:
-    FIGDIR.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(FIGDIR / f"{name}.png", bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    print(f"  [saved] reports/figures/{name}.png")
+from src.plotting import COL_ACCENT, COL_GOOD, COL_HIGHLIGHT, COL_MUTED, COL_PRIMARY, save_fig, setup_plot_style
 
 
 def parse_args() -> argparse.Namespace:
@@ -273,7 +245,7 @@ def plot_model_comparison(results: pd.DataFrame) -> None:
     for bar, val in zip(bars, safe["cv_r2_mean"]):
         ax.text(val + 0.003, bar.get_y() + bar.get_height() / 2, f"{val:+.3f}", va="center", fontsize=9)
     ax.grid(axis="x", alpha=0.3)
-    save_fig(fig, "12_engagement_model_comparison")
+    save_fig(fig, "12_engagement_model_comparison", FIGDIR)
 
 
 def plot_leakage_comparison(results: pd.DataFrame) -> None:
@@ -290,7 +262,7 @@ def plot_leakage_comparison(results: pd.DataFrame) -> None:
     ax.set_xlabel("R2 (CV)")
     ax.legend()
     ax.grid(axis="x", alpha=0.3)
-    save_fig(fig, "13_leakage_comparison")
+    save_fig(fig, "13_leakage_comparison", FIGDIR)
 
 
 def feature_importance_frame(model: Pipeline, X_test: pd.DataFrame, y_test: pd.Series) -> pd.DataFrame:
@@ -351,7 +323,7 @@ def plot_residuals_and_importance(model: Pipeline, X_test: pd.DataFrame, y_test:
     ax2.grid(axis="x", alpha=0.3)
 
     fig.suptitle(f"Residual std = {residuals.std():.2f}; mean residual = {residuals.mean():+.2f}", y=1.02)
-    save_fig(fig, "14_residuals_feature_importance")
+    save_fig(fig, "14_residuals_feature_importance", FIGDIR)
 
 
 def write_summary(

@@ -62,10 +62,7 @@ FIGDIR = REPORTS_DIR / "figures"
 MODELS_DIR = ROOT / "models"
 PROCESSED_DIR = ROOT / "data" / "processed"
 
-COL_PRIMARY = "#2E5C8A"
-COL_ACCENT = "#C44E52"
-COL_MUTED = "#8FA8C4"
-COL_HIGHLIGHT = "#E8A33D"
+from src.plotting import COL_ACCENT, COL_HIGHLIGHT, COL_MUTED, COL_PRIMARY, save_fig, setup_plot_style
 
 PROFILE_COLS = [
     "app_usage_time_min",
@@ -77,29 +74,6 @@ PROFILE_COLS = [
     "profile_pics_count",
     "bio_length",
 ]
-
-
-def setup_plot_style() -> None:
-    sns.set_theme(style="whitegrid", context="notebook")
-    plt.rcParams.update(
-        {
-            "figure.dpi": 140,
-            "savefig.dpi": 150,
-            "axes.titleweight": "bold",
-            "axes.titlesize": 12,
-            "axes.labelsize": 10,
-            "xtick.labelsize": 9,
-            "ytick.labelsize": 9,
-        }
-    )
-
-
-def save_fig(fig, name: str) -> None:
-    FIGDIR.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(FIGDIR / f"{name}.png", bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    print(f"  [saved] reports/figures/{name}.png")
 
 
 def parse_args() -> argparse.Namespace:
@@ -256,7 +230,7 @@ def plot_k_selection(scores: pd.DataFrame) -> None:
     ax2.set_ylabel("Inertia", color=COL_ACCENT)
     ax2.tick_params(axis="y", labelcolor=COL_ACCENT)
     ax1.set_title("KMeans model selection")
-    save_fig(fig, "15_kmeans_selection")
+    save_fig(fig, "15_kmeans_selection", FIGDIR)
 
 
 def plot_embedding(X: pd.DataFrame, labels: np.ndarray, names: dict[int, str], fast: bool) -> None:
@@ -284,7 +258,7 @@ def plot_embedding(X: pd.DataFrame, labels: np.ndarray, names: dict[int, str], f
     ax.set_xlabel(f"{method} 1")
     ax.set_ylabel(f"{method} 2")
     ax.legend(title="", bbox_to_anchor=(1.02, 1), loc="upper left")
-    save_fig(fig, "16_segment_umap")
+    save_fig(fig, "16_segment_umap", FIGDIR)
 
 
 def plot_profiles(summary: pd.DataFrame) -> None:
@@ -295,7 +269,7 @@ def plot_profiles(summary: pd.DataFrame) -> None:
     ax.set_title("Segment profiles as z-scores vs segment average")
     ax.set_xlabel("")
     ax.set_ylabel("")
-    save_fig(fig, "17_segment_profiles")
+    save_fig(fig, "17_segment_profiles", FIGDIR)
 
 
 def write_findings(
