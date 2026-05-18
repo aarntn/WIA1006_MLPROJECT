@@ -15,7 +15,7 @@ polishing what exists, and adding a few things the rubric explicitly asks for.
 |-------------|-------|--------|
 | Relevance and significance of problem | 1% | ⚠️ Done in code, needs to be written in report |
 | Data collection and preprocessing | 2% | ⚠️ Done in code, needs documentation in report |
-| Model selection and performance | 3% | ⚠️ 7 models done; auto-sklearn missing; report missing |
+| Model selection and performance | 3% | ⚠️ 7 models + AutoGluon done; auto-sklearn requires Colab/Linux; report missing |
 | Presentation quality (slides + video) | 2% | ❌ Not started |
 | Creativity and innovation | 1% | ⚠️ Good angle, needs to be explicitly argued |
 | Teamwork and collaboration | 1% | ⚠️ Demonstrate during Q&A |
@@ -41,7 +41,7 @@ polishing what exists, and adding a few things the rubric explicitly asks for.
 - [ ] **D4** — 5-minute video (link in slides)
 
 ### Technical (affects 6% marks)
-- [ ] **T1** — Auto-sklearn comparison in Colab
+- [ ] **T1** — Optional auto-sklearn comparison in Colab/Linux; AutoGluon local AutoML is already done
 - [ ] **T2** — Full-dataset run on 50k rows (remove --fast)
 - [ ] **T3** — SHAP explainability plot in modeling script + dashboard
 
@@ -92,15 +92,15 @@ Cell 5:  Feature engineering — show what features are built
 Cell 6:  Regression models — train 7 models, show CV R2/MAE/RMSE table
 Cell 7:  Leakage comparison — with vs without likes_received
 Cell 8:  Hyperparameter tuning — RandomizedSearchCV on HistGradientBoosting
-Cell 9:  Auto-sklearn — install + run (see T1 below for code)
-Cell 10: Model comparison table (manual models vs auto-sklearn)
+Cell 9:  AutoML comparison - report AutoGluon results; optional auto-sklearn Colab run
+Cell 10: Model comparison table (manual models vs AutoGluon; auto-sklearn only if run)
 Cell 11: SHAP waterfall plot for best model
 Cell 12: K-Means segmentation — k selection, UMAP plot, segment profiles
 Cell 13: Conclusions
 ```
 
 All the code for Cells 3–8 and 11–12 already exists in the local scripts — copy-paste
-from `scripts/` into the notebook. Cells 9–10 are new (see T1 below).
+from `scripts/` into the notebook. Cells 9-10 use the AutoML outputs in `reports/`.
 
 **Share the notebook**: Set sharing to "Anyone with the link can view", then paste the
 link into your presentation slides.
@@ -132,7 +132,8 @@ link into your presentation slides.
   - Random Forest (non-linear ensemble)
   - Gradient Boosting / Hist Gradient Boosting (boosted ensemble)
   - XGBoost (optimized gradient boosting)
-  - Auto-sklearn (AutoML comparison, see T1)
+  - AutoGluon Tabular (executed AutoML comparison)
+  - auto-sklearn (optional Colab/Linux comparison only if actually run)
 - Segmentation: K-Means k=7 with silhouette selection, HDBSCAN comparison, UMAP visualization
 
 **3. Results and Visualization**
@@ -142,7 +143,7 @@ link into your presentation slides.
 - Segment profile heatmap (Figure 17)
 - UMAP projection (Figure 16)
 - SHAP waterfall for one prediction (once T3 is done)
-- Auto-sklearn comparison table (once T1 is done)
+- AutoML comparison table: AutoGluon result done; auto-sklearn only if a Colab/Linux run is completed
 
 **4. Insights and Interpretation**
 - match_outcome has no practical predictive signal (chi-square: 1/11 features p < 0.05,
@@ -151,7 +152,7 @@ link into your presentation slides.
 - Including likes_received inflates R² to 0.13 — demonstrates leakage awareness
 - 7 user segments exist but are loosely separated (silhouette = 0.017); synthetic data
   fingerprints (uniform tag frequencies, perfect class balance) explain the low signal
-- Auto-sklearn confirms the finding: AutoML cannot extract signal that doesn't exist
+- AutoGluon confirms the finding: AutoML cannot extract signal that does not exist; do not claim auto-sklearn confirmation unless it is actually run
 
 **5. Conclusion**
 - The data is synthetic and deliberately noisy — forcing classification would produce
@@ -175,7 +176,7 @@ link into your presentation slides.
 4. Pivot — what we did instead (regression + segmentation)
 5. Data and preprocessing — dataset overview, engineered features
 6. Regression results — model comparison table + leakage check (Figures 12 & 13)
-7. Auto-sklearn comparison — one slide showing our models vs AutoML
+7. AutoML comparison — one slide showing manual models vs AutoGluon, with auto-sklearn noted as Linux/Colab-only if not run
 8. Segmentation — UMAP + segment profile heatmap (Figures 16 & 17)
 9. SHAP explainability — one waterfall chart, interpret it
 10. Dashboard demo — screenshot or screen recording of the Streamlit app
@@ -197,12 +198,28 @@ why that would be wrong. That IS the innovative contribution.
 
 ---
 
-## T1 — Auto-sklearn Comparison
+## T1 — AutoML Comparison Under Platform Constraints
 
-**Why**: Step 7 of the ML flow in the rubric explicitly asks "How does your model compare
-to auto-sklearn?" This is a required comparison, not optional.
+**Why**: Step 7 of the ML flow in the rubric asks how the selected model compares with
+auto-sklearn. The project was developed on Windows, where auto-sklearn cannot run locally
+because it depends on Python's Unix-specific `resource` module. The local executable AutoML
+comparison therefore uses AutoGluon Tabular, while auto-sklearn remains a Colab/Linux-only
+optional backend.
 
-**Runs in Google Colab only** (Linux, not Windows).
+**Already executed locally**:
+
+| Model | Holdout R2 | MAE | RMSE |
+|-------|-----------:|----:|-----:|
+| Dummy mean (baseline) | -0.000 | 7.897 | 9.097 |
+| Best manual HistGB tuned | -0.003 | 7.909 | 9.108 |
+| AutoGluon best_quality | 0.000 | 7.898 | 9.096 |
+
+Interpretation: AutoGluon lands at the same near-zero performance as the baseline and
+manual model, supporting the conclusion that the low signal is a dataset/feature property.
+Do **not** claim auto-sklearn confirmed the result unless the Colab/Linux run below is
+completed.
+
+**Optional strict-rubric run: auto-sklearn in Google Colab only** (Linux, not Windows).
 
 **Step 1**: In your Colab notebook, add a cell:
 ```python
@@ -239,10 +256,10 @@ print(automl.leaderboard())
 |-------|-------|-----------|-----|
 | Dummy mean (baseline) | ≈ 0.000 | ≈ −0.003 | ≈ 7.91 |
 | Best manual (Hist GB tuned) | ≈ 0.000 | ≈ −0.003 | ≈ 7.91 |
-| Auto-sklearn | *(fill from output)* | *(fill)* | *(fill)* |
+| auto-sklearn (optional Colab/Linux) | *(fill only if run)* | *(fill only if run)* | *(fill only if run)* |
 
-**Expected result**: Auto-sklearn will also produce R² near zero, confirming that
-the low signal is a data property, not a modeling failure.
+**Expected result**: auto-sklearn will probably produce R² near zero, but this must be
+reported only after a real Colab/Linux run.
 
 **Step 4**: Write 2–3 sentences interpreting the result for the report.
 

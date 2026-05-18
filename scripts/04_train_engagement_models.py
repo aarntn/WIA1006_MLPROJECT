@@ -459,10 +459,11 @@ def write_summary(
         json.dumps(tuned_search.best_params_, indent=2),
         "```",
         "",
-        "## Auto-sklearn Note",
+        "## AutoML Note",
         "",
-        "The local project remains sklearn-first for Windows/Python 3.12 compatibility. "
-        "Run the final notebook's Colab/Linux auto-sklearn cell for the assignment comparison.",
+        "Run `scripts/06_automl_comparison.py` after training to append the executed "
+        "AutoGluon comparison. auto-sklearn should only be reported if it is actually "
+        "run in Colab/Linux.",
     ]
     (REPORTS_DIR / "engagement_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("  [saved] reports/engagement_summary.md")

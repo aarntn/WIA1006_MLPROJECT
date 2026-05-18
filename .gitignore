@@ -19,10 +19,12 @@ data/processed/*
 # Models
 models/*.pkl
 models/*.joblib
+models/automl/
 !models/.gitkeep
 
 # Reports (keep structure, ignore generated outputs)
 reports/figures/*.png
+!reports/figures/20_automl_comparison.png
 reports/figures/*.pdf
 reports/figures/*.svg
 !reports/figures/.gitkeep

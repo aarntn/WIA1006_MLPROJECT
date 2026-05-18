@@ -1,0 +1,11 @@
+# Final Report Draft
+
+## Methodology: Falsification Criteria
+
+Before changing the project direction, we defined falsification criteria for the original `match_outcome` prediction task. We would treat `match_outcome` as practically unlearnable if: (1) corrected chi-square/ANOVA tests showed no robust feature-target associations after multiple-testing correction, (2) supervised classifiers performed at or near the random baseline on held-out data, and (3) simpler reformulations such as the 3-class outcome did not produce meaningful improvement over the majority-class baseline. These criteria were met: after Bonferroni and Benjamini-Hochberg FDR correction, **0/23** feature-target tests remained statistically significant; 10-class classifier test accuracies stayed near the **0.100** random baseline (**0.096-0.104**); and the 3-class reformulation stayed near the **0.401** majority-class baseline (**0.393-0.405**). Therefore, the project pivoted from forcing match-outcome classification to a more honest analysis of engagement regression and user segmentation.
+
+## Methodology: AutoML Comparison Under Platform Constraints
+
+This project was developed on a Windows machine, so `auto-sklearn` could not be executed locally. The official auto-sklearn documentation states that auto-sklearn requires Linux and cannot run on Windows because it depends on Python's Unix-specific `resource` module. To keep the AutoML comparison executable and honest in the local environment, we used AutoGluon Tabular as the Windows-compatible AutoML benchmark and kept auto-sklearn as a documented Linux/Colab-only method rather than assigning it a placeholder result.
+
+The executed AutoGluon `best_quality` run used the same safe feature policy as the official supervised model: `mutual_matches` was the target, while `likes_received`, `match_outcome`, and the active target were excluded from the feature set. AutoGluon achieved **R2 = 0.000**, **MAE = 7.898**, and **RMSE = 9.096**, which is effectively identical to the dummy baseline and the tuned manual HistGradientBoosting model. This supports the conclusion that the low predictive performance is a property of the dataset and feature set, not simply a failure of manual model selection. We do not claim that auto-sklearn confirmed the result because it was not run in the Windows environment.

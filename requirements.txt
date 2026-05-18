@@ -11,6 +11,10 @@ jupyter>=1.0
 xgboost>=1.7
 hdbscan>=0.8
 
+# AutoML comparison (run in Colab/Linux where possible)
+autogluon.tabular[all]>=1.1
+# auto-sklearn is Linux-only in practice; install/run it separately in Colab.
+
 # Dimensionality reduction
 umap-learn>=0.5
 
