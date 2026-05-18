@@ -43,7 +43,7 @@ Random baseline: 0.100
 
 | Model | Train acc | Test acc |
 |---|---|---|
-| Logistic Regression | 0.111 | 0.097 |
+| Logistic Regression | 0.110 | 0.096 |
 | Random Forest (100) | 1.000 | 0.100 |
 | Gradient Boosting (50) | 0.191 | 0.104 |
 
@@ -61,9 +61,9 @@ Majority-class baseline: 0.401
 
 - Total tests performed: 11 chi-square + 12 ANOVA = **23 tests**
 - **Bonferroni** threshold (chi-square only): α/m = 0.05/11 = 0.00455
-  - gender (p=0.0102) > 0.00455 → **NOT significant after Bonferroni**
+  - Most significant chi-square feature: `gender` (p=0.0102) > 0.00455 → **NOT significant after Bonferroni**
   - Result: **0/11** categorical features survive Bonferroni correction
-- **Benjamini–Hochberg FDR** threshold (all 23 tests, q=0.05): rank-1 threshold = 0.05/23 ≈ 0.00217
+- **Benjamini–Hochberg FDR** (all 23 tests, q=0.05, via statsmodels multipletests):
   - Result: **0/23** features survive BH-FDR correction
 - **Corrected conclusion: zero of 23 feature–target univariate tests are statistically significant.**
   This is consistent with a synthetic data generator that samples each column independently.
