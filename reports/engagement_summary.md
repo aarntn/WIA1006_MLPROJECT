@@ -23,6 +23,16 @@
 }
 ```
 
-## AutoML Note
+## AutoML Comparison Under Platform Constraints
 
-Run `scripts/06_automl_comparison.py` after training to append the executed AutoGluon comparison. auto-sklearn should only be reported if it is actually run in Colab/Linux.
+The project was developed on Windows. FLAML is a Windows-native AutoML framework that does not depend on Unix-specific system resources and was executed locally. auto-sklearn was additionally executed in Google Colab/Linux. AutoGluon Tabular was also used as a second Windows-compatible benchmark.
+
+| Model | Backend | Status | Holdout R2 | MAE | RMSE |
+|---|---|---|---:|---:|---:|
+| Dummy mean | manual baseline | ok | -0.000 | 7.897 | 9.097 |
+| Best manual tuned HistGB | manual tuned | ok | -0.003 | 7.909 | 9.108 |
+| FLAML AutoML | FLAML | ok | -0.006 | 7.916 | 9.123 |
+| auto-sklearn | auto-sklearn | ok | -0.000 | 7.892 | 9.098 |
+| AutoGluon best_quality | AutoGluon | ok | 0.000 | 7.898 | 9.096 |
+
+Best observed AutoML/manual comparison row: **AutoGluon best_quality** (AutoGluon, holdout R2=0.000). All comparisons use the safe feature set with `likes_received`, `match_outcome`, and the active target excluded.
