@@ -49,29 +49,3 @@ def save_fig(fig, name: str, figdir: Path) -> None:
     print(f"  [saved] {name}.png")
 
 
-def label_bars(ax, bars, values, fmt: str = "{:.0f}",
-               offset: float = 3, fontsize: int = 8, color: str = "black") -> None:
-    """Annotate vertical bars with values above them."""
-    for bar, val in zip(bars, values):
-        h = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            h + offset,
-            fmt.format(val),
-            ha="center", va="bottom", fontsize=fontsize, color=color,
-        )
-
-
-def label_hbars(ax, bars, values, fmt: str = "{:.0f}",
-                offset_frac: float = 0.01, fontsize: int = 8, color: str = "black") -> None:
-    """Annotate horizontal bars with values to their right."""
-    xmax = ax.get_xlim()[1]
-    offset = xmax * offset_frac
-    for bar, val in zip(bars, values):
-        w = bar.get_width()
-        ax.text(
-            w + offset,
-            bar.get_y() + bar.get_height() / 2,
-            fmt.format(val),
-            ha="left", va="center", fontsize=fontsize, color=color,
-        )

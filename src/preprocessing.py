@@ -11,17 +11,6 @@ def parse_interest_tags(series: pd.Series) -> list[list[str]]:
     return [[t.strip() for t in str(s).split(",") if t.strip()] for s in series]
 
 
-def multi_hot_interests(series: pd.Series) -> pd.DataFrame:
-    """
-    Multi-hot encode interest_tags.
-    Returns a DataFrame with one binary column per unique interest.
-    """
-    parsed = parse_interest_tags(series)
-    all_tags = sorted({t for row in parsed for t in row})
-    data = {tag: [1 if tag in row else 0 for row in parsed] for tag in all_tags}
-    return pd.DataFrame(data, index=series.index)
-
-
 
 def label_encode(df: pd.DataFrame, cols: list[str]) -> tuple[pd.DataFrame, dict]:
     """

@@ -22,13 +22,10 @@ models/*.joblib
 models/automl/
 !models/.gitkeep
 
-# Reports (keep structure, ignore generated outputs)
-reports/figures/*.png
-!reports/figures/20_automl_comparison.png
+# Reports (figures tracked as submission evidence)
 reports/figures/*.pdf
 reports/figures/*.svg
 !reports/figures/.gitkeep
-reports/signal_findings.md
 
 # Local app/runtime logs
 *.log

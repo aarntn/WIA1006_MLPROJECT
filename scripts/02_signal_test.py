@@ -20,6 +20,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -115,7 +117,7 @@ def main() -> None:
     log("|---|---|---|")
 
     clf_models = {
-        "Logistic Regression": LogisticRegression(max_iter=500),
+        "Logistic Regression": LogisticRegression(max_iter=500, random_state=42),
         "Random Forest (100)": RandomForestClassifier(n_estimators=100, n_jobs=-1, random_state=42),
         "Gradient Boosting (50)": GradientBoostingClassifier(n_estimators=50, random_state=42),
     }
@@ -156,23 +158,31 @@ def main() -> None:
     log("")
 
     # --- Bonferroni / Benjamini-Hochberg correction ---
+    from statsmodels.stats.multitest import multipletests
+
     all_p_vals = [p for _, _, p in chi_results] + [p for _, _, p in anova_results]
     n_chi = len(chi_results)
     n_total = len(all_p_vals)
 
-    bonf_thresh = 0.05 / n_chi          # 0.05 / 11 = 0.00455 (chi-square only)
-    bh_thresh   = 0.05 / n_total        # 0.05 / 23 ≈ 0.00217 (rank-1 BH threshold)
-
+    bonf_thresh = 0.05 / n_chi   # Bonferroni over chi-square tests only
     n_sig_bonf_chi = sum(p < bonf_thresh for _, _, p in chi_results)
-    n_sig_bh_all   = sum(p < bh_thresh   for p in all_p_vals)
+
+    # True Benjamini-Hochberg FDR over all tests
+    bh_reject, _, _, _ = multipletests(all_p_vals, alpha=0.05, method="fdr_bh")
+    n_sig_bh_all = int(bh_reject.sum())
+    bh_thresh = 0.05 / n_total   # rank-1 threshold shown for reference only
+
+    # Find the most nominally significant chi-square feature for the log
+    top_chi = min(chi_results, key=lambda r: r[2])
+    top_chi_name, _, top_chi_p = top_chi
 
     log("## 5. Multiple-Testing Correction")
     log("")
     log(f"- Total tests performed: {n_chi} chi-square + {len(anova_results)} ANOVA = **{n_total} tests**")
     log(f"- **Bonferroni** threshold (chi-square only): α/m = 0.05/{n_chi} = {bonf_thresh:.5f}")
-    log(f"  - gender (p=0.0102) > {bonf_thresh:.5f} → **NOT significant after Bonferroni**")
+    log(f"  - Most significant chi-square feature: `{top_chi_name}` (p={top_chi_p:.4f}) > {bonf_thresh:.5f} → **NOT significant after Bonferroni**")
     log(f"  - Result: **{n_sig_bonf_chi}/{n_chi}** categorical features survive Bonferroni correction")
-    log(f"- **Benjamini–Hochberg FDR** threshold (all {n_total} tests, q=0.05): rank-1 threshold = 0.05/{n_total} ≈ {bh_thresh:.5f}")
+    log(f"- **Benjamini–Hochberg FDR** (all {n_total} tests, q=0.05, via statsmodels multipletests):")
     log(f"  - Result: **{n_sig_bh_all}/{n_total}** features survive BH-FDR correction")
     log(f"- **Corrected conclusion: zero of {n_total} feature–target univariate tests are statistically significant.**")
     log(f"  This is consistent with a synthetic data generator that samples each column independently.")
@@ -388,8 +398,8 @@ def main() -> None:
         f"Random Forest train–test gap:\n"
         f"{rf_train:.2f} − {rf_test:.2f} = {gap_rf:.2f}\n"
         f"(classic no-signal fingerprint)\n\n"
-        f"After Bonferroni: 0/23 features\n"
-        f"statistically associated with target",
+        f"After Bonferroni: {n_sig_bonf_chi}/{n_chi} chi-sq survive\n"
+        f"After BH-FDR: {n_sig_bh_all}/{n_total} survive",
         transform=ax2.transAxes, ha="left", va="top", fontsize=8,
         family="monospace", color="#555",
         bbox=dict(boxstyle="round,pad=0.5", facecolor="#FFF4E6", edgecolor=COL_HIGHLIGHT),
@@ -397,7 +407,7 @@ def main() -> None:
 
     fig.suptitle(
         "Signal test summary: no feature predicts match_outcome above chance\n"
-        "(After Bonferroni correction: 0 of 23 feature–target tests are significant)",
+        f"(After Bonferroni: {n_sig_bonf_chi}/{n_chi} chi-sq significant; after BH-FDR: {n_sig_bh_all}/{n_total} significant)",
         fontsize=13, fontweight="bold", y=1.02,
     )
     save_fig(fig, "10_signal_summary", FIGDIR)

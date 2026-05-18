@@ -64,7 +64,7 @@ def sidebar_input(df: pd.DataFrame) -> pd.DataFrame:
     st.sidebar.header("Behavior")
     row["app_usage_time_min"] = st.sidebar.slider("Usage minutes", 0, 300, 90)
     row["swipe_right_ratio"] = st.sidebar.slider("Swipe-right ratio", 0.0, 1.0, 0.45, 0.01)
-    row["profile_pics_count"] = st.sidebar.slider("Profile photos", 1, 7, 4)
+    row["profile_pics_count"] = st.sidebar.slider("Profile photos", 0, 6, 4)
     row["bio_length"] = st.sidebar.slider("Bio length", 0, 500, 180)
     row["message_sent_count"] = st.sidebar.slider("Messages sent", 0, 100, 35)
     row["emoji_usage_rate"] = st.sidebar.slider("Emoji rate", 0.0, 1.0, 0.35, 0.01)

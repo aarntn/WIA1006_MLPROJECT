@@ -29,6 +29,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # Make src/ importable when running this file directly
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -724,7 +726,13 @@ sns.barplot(
     palette=[COL_PRIMARY, COL_HIGHLIGHT, COL_ACCENT],
     ax=ax1,
 )
-ax1.set_title("Segment medians across engagement outcomes")
+n_seg = len(seg_df)
+n_total_df = len(df)
+coverage_pct = 100 * n_seg / n_total_df
+ax1.set_title(
+    f"Segment medians across engagement outcomes\n"
+    f"(rule-based segments cover {n_seg:,} of {n_total_df:,} users — {coverage_pct:.1f}% of dataset)"
+)
 ax1.set_xlabel("")
 ax1.set_ylabel("Median value")
 ax1.tick_params(axis="x", rotation=15)
