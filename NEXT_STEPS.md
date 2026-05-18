@@ -27,6 +27,13 @@ polishing what exists, and adding a few things the rubric explicitly asks for.
 
 ## Master Checklist (ordered by priority)
 
+### Code quality fixes (do these first — some are blocking)
+- [ ] **Q1** — Add `if __name__ == "__main__": main()` guard to `scripts/02_signal_test.py` (currently runs at import time)
+- [x] **Q2** — Delete `scripts/plotting.py` — dead duplicate of `src/plotting.py`; all scripts already import from `src.plotting`
+- [ ] **Q3** — Delete or mark unused `engineer_ratio_features()` in `src/preprocessing.py` — duplicate of `add_engineered_features()` in `src/features.py`
+- [ ] **Q4** — Add `.fillna("Neutral")` to `outcome_3class()` in `src/preprocessing.py:68` — `.map()` silently returns NaN for unmapped labels
+- [ ] **Q5** — Add a feature selection step (rubric point 4): use the permutation importance already computed in `feature_importance_frame()` to drop the bottom-N features and train a "feature-selected" variant — this satisfies the rubric's explicit ask for feature selection/extraction
+
 ### Deliverables (required to submit at all)
 - [ ] **D1** — Google Colab notebook with full pipeline
 - [ ] **D2** — Group project report (PDF)

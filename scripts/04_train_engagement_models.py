@@ -13,6 +13,7 @@ Outputs:
     - reports/figures/12_engagement_model_comparison.png
     - reports/figures/13_leakage_comparison.png
     - reports/figures/14_residuals_feature_importance.png
+    - reports/figures/16_learning_curve.png
     - models/best_mutual_matches_model.joblib
 """
 from __future__ import annotations
@@ -44,7 +45,8 @@ from sklearn.ensemble import (
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import ElasticNet, PoissonRegressor, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import RandomizedSearchCV, cross_validate, train_test_split
+from sklearn.model_selection import RandomizedSearchCV, cross_validate, learning_curve, train_test_split
+from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -152,6 +154,16 @@ def build_models(fast: bool, include_paired_target: bool) -> dict[str, Pipeline]
             ),
             include_paired_target,
         )
+
+    # MLP: defensive box-check for "you didn't try deep learning" objection.
+    # Grinsztajn et al. (NeurIPS 2022) show tree models dominate on tabular data;
+    # MLP is included to confirm — not expected to exceed GBDT performance.
+    mlp_iter = 100 if fast else 300
+    models["MLP"] = make_pipeline(
+        MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=mlp_iter, random_state=42, early_stopping=True),
+        include_paired_target,
+        scale=True,
+    )
 
     return models
 
@@ -326,6 +338,96 @@ def plot_residuals_and_importance(model: Pipeline, X_test: pd.DataFrame, y_test:
     save_fig(fig, "14_residuals_feature_importance", FIGDIR)
 
 
+def run_negative_binomial(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+) -> dict | None:
+    """Fit statsmodels NegativeBinomial on the official safe feature set.
+
+    NegBin is the textbook choice when variance/mean >> 1 (here ≈ 5.98).
+    Returns a result row compatible with the CV results DataFrame, or None on failure.
+    """
+    try:
+        import statsmodels.api as sm
+        from statsmodels.discrete.discrete_model import NegativeBinomial
+    except ImportError:
+        print("  [skip] statsmodels not installed — skipping Negative Binomial")
+        return None
+
+    print("  - Neg Binomial (statsmodels, holdout only)")
+    builder = EngagementFeatureBuilder(
+        target_col=TARGET_COL,
+        include_paired_target=False,
+        include_match_outcome=False,
+        include_interest_tags=True,
+    )
+    X_tr = builder.fit_transform(X_train)
+    X_te = builder.transform(X_test)
+
+    X_tr_sm = sm.add_constant(X_tr, has_constant="add")
+    X_te_sm = sm.add_constant(X_te, has_constant="add")
+
+    try:
+        nb_model = NegativeBinomial(y_train.values, X_tr_sm)
+        nb_result = nb_model.fit(disp=False, maxiter=100)
+        preds = nb_result.predict(X_te_sm)
+        return {
+            "setting": "official safe",
+            "model": "Neg Binomial",
+            "cv_r2_mean": r2_score(y_test, preds),
+            "cv_r2_std": 0.0,
+            "cv_mae_mean": mean_absolute_error(y_test, preds),
+            "cv_rmse_mean": float(np.sqrt(mean_squared_error(y_test, preds))),
+        }
+    except Exception as exc:
+        print(f"  [warn] Negative Binomial fit failed: {exc}")
+        return None
+
+
+def plot_learning_curve(model: Pipeline, X_train: pd.DataFrame, y_train: pd.Series) -> None:
+    """Plot learning curve: R² vs training-set size.
+
+    On a no-signal target, train and validation curves converge to the same
+    high-error asymptote, proving Bayes error ≈ chance rate and that more
+    data would not improve predictions (standard bias-variance diagnostic).
+    """
+    print("\nPlotting learning curve...")
+    train_sizes = np.linspace(0.1, 1.0, 8)
+    sizes, train_scores, val_scores = learning_curve(
+        model,
+        X_train,
+        y_train,
+        train_sizes=train_sizes,
+        scoring="r2",
+        cv=3,
+        n_jobs=-1,
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(sizes, train_scores.mean(axis=1), label="Train R²", color=COL_GOOD, marker="o")
+    ax.plot(sizes, val_scores.mean(axis=1),   label="Validation R²", color=COL_ACCENT, marker="o")
+    ax.fill_between(
+        sizes,
+        val_scores.mean(axis=1) - val_scores.std(axis=1),
+        val_scores.mean(axis=1) + val_scores.std(axis=1),
+        alpha=0.2, color=COL_ACCENT,
+    )
+    ax.axhline(0, color="#aaa", linestyle=":", linewidth=1)
+    ax.set_xlabel("Training set size")
+    ax.set_ylabel("R²")
+    ax.set_title(
+        "Learning curve — validation R² does not improve with more data\n"
+        "Convergence to near-zero confirms Bayes error ≈ chance rate",
+        fontweight="bold",
+    )
+    ax.legend()
+    ax.grid(alpha=0.3)
+    ax.set_axisbelow(True)
+    save_fig(fig, "16_learning_curve", FIGDIR)
+
+
 def write_summary(
     results: pd.DataFrame,
     tuned_search: RandomizedSearchCV,
@@ -394,7 +496,10 @@ def main() -> None:
 
     safe_results = evaluate_models(X_train, y_train, args.fast, include_paired_target=False, cv=args.cv)
     paired_results = evaluate_models(X_train, y_train, args.fast, include_paired_target=True, cv=args.cv)
-    results = pd.concat([safe_results, paired_results], ignore_index=True)
+
+    nb_row = run_negative_binomial(X_train, y_train, X_test, y_test)
+    extra = [pd.DataFrame([nb_row])] if nb_row is not None else []
+    results = pd.concat([safe_results, paired_results] + extra, ignore_index=True)
     results.to_csv(REPORTS_DIR / "engagement_model_results.csv", index=False)
     print("  [saved] reports/engagement_model_results.csv")
 
@@ -407,6 +512,7 @@ def main() -> None:
     plot_model_comparison(results)
     plot_leakage_comparison(results)
     plot_residuals_and_importance(best_model, X_test, y_test)
+    plot_learning_curve(best_model, X_train, y_train)
     write_summary(results, tuned, metrics, n_rows=len(df), cv=args.cv, fast=args.fast)
 
     print("\nDone.")

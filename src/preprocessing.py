@@ -65,4 +65,4 @@ def outcome_3class(series: pd.Series) -> pd.Series:
         "Date Happened": "Positive",
         "Relationship Formed": "Positive",
     }
-    return series.map(mapping)
+    return series.map(mapping).fillna("Neutral")

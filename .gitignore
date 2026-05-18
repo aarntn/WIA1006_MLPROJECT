@@ -28,6 +28,9 @@ reports/figures/*.svg
 !reports/figures/.gitkeep
 reports/signal_findings.md
 
+# Local app/runtime logs
+*.log
+
 # OS
 .DS_Store
 Thumbs.db
