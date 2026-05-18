@@ -35,7 +35,7 @@ Swipe Atlas reframes the problem honestly:
 | Random Forest severely overfits | Train accuracy = 1.00, test accuracy = 0.10; flat across all max_depth values |
 | `mutual_matches` also has near-zero signal | Tuned model holdout R² = −0.001 (safe feature set) |
 | `likes_received` causes leakage | Including it inflates R² from −0.001 to 0.127 |
-| AutoML confirms the finding | FLAML R² = −0.006, AutoGluon R² = 0.000 — both at baseline |
+| AutoML confirms the finding | FLAML R² = −0.006, AutoGluon R² = 0.000, auto-sklearn R² = −0.000 — all three at baseline |
 | No cluster structure detected | K-Means k=3 selected (best silhouette = 0.019, well below 0.25 "weak" threshold); GMM BIC monotone; HDBSCAN all-noise |
 | Data is synthetic | Perfect class balance, near-uniform tag frequencies (~2% each across 49 tags), zero missing values |
 
@@ -198,7 +198,7 @@ python scripts/05_segmentation.py --fast
 | MLP | Neural network (defensive check) | −0.028 |
 | FLAML AutoML | Windows-native AutoML | −0.006 |
 | AutoGluon Tabular | Windows-native AutoML | 0.000 |
-| auto-sklearn 2.0 | Linux/Colab only — see `notebooks/AUTOSKLEARN_COLAB_CELLS.md` | — |
+| auto-sklearn 2.0 | Linux/Colab — executed in Google Colab | −0.000 |
 
 **Tuning**: RandomizedSearchCV on HistGradientBoosting
 (max_iter, learning_rate, max_leaf_nodes, min_samples_leaf, l2_regularization)
