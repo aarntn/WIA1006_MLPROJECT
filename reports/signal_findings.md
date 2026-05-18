@@ -43,7 +43,7 @@ Random baseline: 0.100
 
 | Model | Train acc | Test acc |
 |---|---|---|
-| Logistic Regression | 0.110 | 0.096 |
+| Logistic Regression | 0.111 | 0.097 |
 | Random Forest (100) | 1.000 | 0.100 |
 | Gradient Boosting (50) | 0.191 | 0.104 |
 

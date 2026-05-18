@@ -1,0 +1,7 @@
+estimator,n_estimators,num_leaves,min_child_samples,learning_rate,log_max_bin,colsample_bytree,reg_alpha,reg_lambda,max_features,max_leaves,min_child_weight,subsample,colsample_bylevel,max_depth,penalty,alpha,l1_ratio,epsilon,eta0,power_t,average,loss
+lgbm,12.0,4.0,36.0,0.23217770840042995,10.0,0.8553549142846876,0.06801050456692988,0.230018256110269,,,,,,,,,,,,,,
+rf,9.0,,,,,,,,1.0,11.0,,,,,,,,,,,,
+xgboost,12.0,,,0.2082238116804369,,0.9005610960744235,0.00475960773202511,0.1584312424454333,,8.0,7.2600044534754895,0.8233081047484256,1.0,,,,,,,,,
+extra_tree,10.0,,,,,,,,0.8577457172226007,4.0,,,,,,,,,,,,
+xgb_limitdepth,11.0,,,0.19418610286509216,,1.0,0.11108849973394584,0.053764484061948614,,,0.3440167631710008,0.8342731111325622,1.0,4.0,,,,,,,,
+sgd,,,,invscaling,,,,,,,,,,,l2,0.0001734653039446806,0.4821569182889797,0.04349778321463243,0.004843358100867735,0.03826231751706579,False,squared_epsilon_insensitive

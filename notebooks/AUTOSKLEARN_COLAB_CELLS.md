@@ -1,8 +1,15 @@
-# Auto-sklearn Google Colab Cells
+# Auto-sklearn 2.0 — Google Colab Cells
 
-Use these cells in a fresh Google Colab notebook to run the strict auto-sklearn comparison.
-This keeps the Windows project honest: AutoGluon runs locally on Windows, while auto-sklearn
-runs in Colab/Linux because it is not supported on native Windows.
+**Version note:** `auto-sklearn 0.15.0` is **auto-sklearn 2.0** as described in:
+> Feurer, Eggensperger, Falkner, Lindauer & Hutter. "Auto-sklearn 2.0: Hands-free AutoML via Meta-Learning." *JMLR* 23(261):1–61, 2022.
+
+The package version number (0.15.0) and the paper title (Auto-sklearn 2.0) refer to the same release.
+Cite this paper when referencing the auto-sklearn run.
+
+Use these cells in a fresh Google Colab notebook (Linux backend — runs from any browser including Windows).
+auto-sklearn cannot install on native Windows because it depends on `pyrfr`, a C extension that
+requires POSIX headers unavailable on Windows. AutoGluon and FLAML cover the Windows-native AutoML
+comparison; this notebook adds auto-sklearn 2.0 for strict rubric Step 7 compliance.
 
 ## Cell 1 - Clone The Project
 
@@ -22,10 +29,11 @@ git pull
 %cd /content/WIA1006_MLPROJECT
 ```
 
-## Cell 2 - Create The Auto-sklearn Environment
+## Cell 2 - Create The Auto-sklearn 2.0 Environment
 
-This installs Miniforge and creates a separate Python 3.9 environment. Do not use plain
-`pip install auto-sklearn` on Colab unless this conda route fails.
+This installs Miniforge and creates a Python 3.9 conda environment with auto-sklearn 2.0
+(`auto-sklearn=0.15.0`). Do not use plain `pip install auto-sklearn` on Colab — the conda
+route is more reliable because it resolves the `pyrfr` and `smac` native dependencies correctly.
 
 ```python
 %%bash
@@ -88,7 +96,22 @@ for path in [
 
 Only use this after the auto-sklearn row has real numbers:
 
-> auto-sklearn was executed in Google Colab/Linux because it cannot run on native Windows.
-> Its holdout R2 was [fill], compared with AutoGluon's 0.000 and the tuned manual model's
-> -0.003, showing that AutoML also could not extract meaningful predictive signal from the
-> safe feature set.
+> auto-sklearn 2.0 (Feurer et al., JMLR 2022) was executed in Google Colab/Linux because
+> it cannot install on native Windows (the `pyrfr` C extension requires POSIX headers).
+> Its holdout R² was [fill], compared with AutoGluon's 0.000, FLAML's -0.006, and the tuned
+> manual model's -0.003, showing that three independent AutoML frameworks also could not
+> extract meaningful predictive signal from the safe feature set.
+
+## Citation
+
+```
+@article{feurer2022auto,
+  title={Auto-sklearn 2.0: Hands-free AutoML via Meta-Learning},
+  author={Feurer, Matthias and Eggensperger, Katharina and Falkner, Stefan and Lindauer, Marius and Hutter, Frank},
+  journal={Journal of Machine Learning Research},
+  volume={23},
+  number={261},
+  pages={1--61},
+  year={2022}
+}
+```

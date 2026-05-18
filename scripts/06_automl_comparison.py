@@ -1,16 +1,18 @@
 """
 06_automl_comparison.py - run AutoML comparisons for the engagement model.
 
-Recommended Colab/Linux run:
-    python scripts/06_automl_comparison.py --backend all
-
-Local smoke run for one backend:
+Windows-native run (FLAML + AutoGluon, no Linux required):
+    python scripts/06_automl_comparison.py --backend flaml --sample 12000
     python scripts/06_automl_comparison.py --backend autogluon --sample 12000 --autogluon-time 600
+
+Colab/Linux run (includes auto-sklearn):
+    python scripts/06_automl_comparison.py --backend all
 
 Outputs, when the corresponding backend runs successfully:
     - reports/automl_results.csv
     - reports/automl_leaderboard_autosklearn.csv
     - reports/automl_leaderboard_autogluon.csv
+    - reports/automl_leaderboard_flaml.csv
     - reports/figures/20_automl_comparison.png
 """
 from __future__ import annotations
@@ -54,13 +56,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--backend",
-        choices=["all", "autosklearn", "autogluon"],
+        choices=["all", "autosklearn", "autogluon", "flaml"],
         default="all",
-        help="AutoML backend to run.",
+        help="AutoML backend to run. 'flaml' works on Windows without Linux/WSL.",
     )
     parser.add_argument("--sample", type=int, default=None, help="Optional row sample for faster smoke tests.")
     parser.add_argument("--autosklearn-time", type=int, default=3600, help="auto-sklearn time budget in seconds.")
     parser.add_argument("--autogluon-time", type=int, default=3600, help="AutoGluon time budget in seconds.")
+    parser.add_argument("--flaml-time", type=int, default=120, help="FLAML time budget in seconds (default 120).")
     return parser.parse_args()
 
 
@@ -226,12 +229,48 @@ def run_autogluon(
     return metric_row("AutoGluon best_quality", "AutoGluon", y_test, preds, time.time() - start, time_limit)
 
 
+def run_flaml(
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    y_train: pd.Series,
+    y_test: pd.Series,
+    time_limit: int,
+) -> dict[str, object]:
+    try:
+        from flaml import AutoML
+    except Exception as exc:
+        raise RuntimeError("FLAML is unavailable. Install with `pip install flaml`.") from exc
+
+    start = time.time()
+    automl = AutoML()
+    automl.fit(
+        X_train,
+        y_train,
+        task="regression",
+        time_budget=time_limit,
+        metric="r2",
+        seed=42,
+        verbose=1,
+    )
+    preds = automl.predict(X_test)
+
+    leaderboard_rows = []
+    for estimator, cfg in (automl.best_config_per_estimator or {}).items():
+        leaderboard_rows.append({"estimator": estimator, **cfg})
+    pd.DataFrame(leaderboard_rows).to_csv(REPORTS_DIR / "automl_leaderboard_flaml.csv", index=False)
+
+    return metric_row("FLAML AutoML", "FLAML", y_test, preds, time.time() - start, time_limit)
+
+
 def plot_automl_comparison(results: pd.DataFrame) -> None:
     ok = results[results["status"] == "ok"].copy()
     ok = ok.sort_values("r2")
     fig, ax = plt.subplots(figsize=(10, 5.5))
     colors = [
-        COL_MUTED if "manual" in backend else COL_PRIMARY if backend == "AutoGluon" else COL_HIGHLIGHT
+        COL_MUTED if "manual" in backend
+        else COL_PRIMARY if backend == "AutoGluon"
+        else COL_ACCENT if backend == "FLAML"
+        else COL_HIGHLIGHT
         for backend in ok["backend"]
     ]
     bars = ax.barh(ok["model"], ok["r2"], color=colors, edgecolor="white")
@@ -262,12 +301,35 @@ def update_engagement_summary(results: pd.DataFrame) -> None:
     blocked = results[results["status"] != "ok"]
     autosklearn = results[results["model"] == "auto-sklearn"]
     autosklearn_ok = not autosklearn.empty and (autosklearn["status"] == "ok").any()
+    flaml_ok = not results[results["model"] == "FLAML AutoML"].empty and (
+        results[results["model"] == "FLAML AutoML"]["status"] == "ok"
+    ).any()
 
     lines = [
         "## AutoML Comparison Under Platform Constraints",
         "",
     ]
-    if autosklearn_ok:
+    if autosklearn_ok and flaml_ok:
+        lines.extend(
+            [
+                "The project was developed on Windows. FLAML is a Windows-native AutoML framework that does not "
+                "depend on Unix-specific system resources and was executed locally. auto-sklearn was additionally "
+                "executed in Google Colab/Linux. AutoGluon Tabular was also used as a second Windows-compatible benchmark.",
+                "",
+            ]
+        )
+    elif flaml_ok:
+        lines.extend(
+            [
+                "The project was developed and executed on Windows. FLAML (Fast and Lightweight AutoML, by Microsoft) "
+                "is a Windows-native AutoML framework that does not require Linux or WSL. AutoGluon Tabular is a second "
+                "Windows-compatible AutoML benchmark. auto-sklearn is Linux-only and cannot run on Windows because it "
+                "depends on Python's Unix-specific `resource` module; it is documented as a platform constraint without "
+                "a placeholder score.",
+                "",
+            ]
+        )
+    elif autosklearn_ok:
         lines.extend(
             [
                 "The project was developed on Windows, where auto-sklearn cannot run because it depends on "
@@ -317,10 +379,14 @@ def update_engagement_summary(results: pd.DataFrame) -> None:
             "described as confirming the result unless it is later run in Colab/Linux."
         )
 
-    updated = replace_section(text, "AutoML Comparison Under Platform Constraints", "\n".join(lines))
-    updated = replace_section(updated, "AutoML Comparison", "\n".join(lines))
-    updated = replace_section(updated, "Auto-sklearn Note", "")
-    path.write_text(updated.strip() + "\n", encoding="utf-8")
+    # Remove all legacy AutoML section variants, then append the canonical one.
+    import re as _re
+    _automl_pat = _re.compile(
+        r"^## (?:AutoML Comparison.*?|AutoML Note|Auto-sklearn Note)\n.*?(?=^## |\Z)",
+        _re.M | _re.S,
+    )
+    text = _automl_pat.sub("", text).rstrip() + "\n\n" + "\n".join(lines) + "\n"
+    path.write_text(text.strip() + "\n", encoding="utf-8")
 
 
 def merge_existing_results(results: list[dict[str, object]]) -> pd.DataFrame:
@@ -336,8 +402,9 @@ def merge_existing_results(results: list[dict[str, object]]) -> pd.DataFrame:
     order = {
         "Dummy mean": 0,
         "Best manual tuned HistGB": 1,
-        "auto-sklearn": 2,
-        "AutoGluon best_quality": 3,
+        "FLAML AutoML": 2,
+        "auto-sklearn": 3,
+        "AutoGluon best_quality": 4,
     }
     combined["_order"] = combined["model"].map(order).fillna(99)
     return combined.sort_values(["_order", "model"]).drop(columns="_order").reset_index(drop=True)
@@ -362,7 +429,18 @@ def main() -> None:
     X_train, X_test, y_train, y_test = prepare_data(args.sample)
 
     rows = baseline_rows(X_train, X_test, y_train, y_test)
-    backends = ["autosklearn", "autogluon"] if args.backend == "all" else [args.backend]
+    backends = ["autosklearn", "autogluon", "flaml"] if args.backend == "all" else [args.backend]
+
+    _model_name = {
+        "autosklearn": "auto-sklearn",
+        "autogluon": "AutoGluon best_quality",
+        "flaml": "FLAML AutoML",
+    }
+    _time_limit = {
+        "autosklearn": args.autosklearn_time,
+        "autogluon": args.autogluon_time,
+        "flaml": args.flaml_time,
+    }
 
     for backend in backends:
         try:
@@ -370,18 +448,20 @@ def main() -> None:
                 rows.append(run_autosklearn(X_train, X_test, y_train, y_test, args.autosklearn_time))
             elif backend == "autogluon":
                 rows.append(run_autogluon(X_train, X_test, y_train, y_test, args.autogluon_time))
+            elif backend == "flaml":
+                rows.append(run_flaml(X_train, X_test, y_train, y_test, args.flaml_time))
         except Exception as exc:
             print(f"  [blocked] {backend}: {exc}")
             rows.append(
                 {
-                    "model": "auto-sklearn" if backend == "autosklearn" else "AutoGluon best_quality",
+                    "model": _model_name.get(backend, backend),
                     "backend": backend,
                     "status": f"blocked: {exc}",
                     "r2": np.nan,
                     "mae": np.nan,
                     "rmse": np.nan,
                     "elapsed_seconds": 0.0,
-                    "time_limit_seconds": args.autosklearn_time if backend == "autosklearn" else args.autogluon_time,
+                    "time_limit_seconds": _time_limit.get(backend, 0),
                 }
             )
 

@@ -79,6 +79,37 @@ def sidebar_input(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame([row])
 
 
+def _show_shap_waterfall(model, sample_df: pd.DataFrame) -> None:
+    try:
+        import shap
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        st.caption("Install `shap` to see feature attribution.")
+        return
+
+    try:
+        X_feats = model.named_steps["features"].transform(sample_df)
+        feature_names = list(model.named_steps["features"].get_feature_names_out())
+        estimator = model.named_steps["model"]
+
+        try:
+            explainer = shap.TreeExplainer(estimator)
+            sv = explainer(X_feats.values, check_additivity=False)
+        except Exception:
+            bg = X_feats
+            explainer = shap.Explainer(estimator, bg.values)
+            sv = explainer(X_feats.values)
+
+        sv.feature_names = feature_names
+        shap.plots.waterfall(sv[0], max_display=12, show=False)
+        fig = plt.gcf()
+        st.pyplot(fig, clear_figure=True)
+    except Exception as exc:
+        st.caption(f"SHAP attribution unavailable: {exc}")
+
+
 def prediction_tab(df: pd.DataFrame) -> None:
     model = load_model()
     sample = sidebar_input(df)
@@ -90,6 +121,10 @@ def prediction_tab(df: pd.DataFrame) -> None:
     pred = float(model.predict(sample)[0])
     st.metric("Predicted mutual matches", f"{pred:.1f}")
     st.dataframe(sample.drop(columns=[TARGET, "mutual_matches"]), use_container_width=True)
+
+    st.subheader("Feature Attribution (SHAP)")
+    st.caption("Which features pushed this prediction up or down. With R²≈0, all values land near zero — no feature dominates.")
+    _show_shap_waterfall(model, sample)
 
 
 def segments_tab(df: pd.DataFrame) -> None:

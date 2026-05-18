@@ -11,8 +11,10 @@ jupyter>=1.0
 xgboost>=1.7
 hdbscan>=0.8
 
-# AutoML comparison (run in Colab/Linux where possible)
+# AutoML comparison
 autogluon.tabular[all]>=1.1
+flaml>=2.1                          # Windows-native AutoML (no Linux/WSL required)
+lightgbm>=4.0                       # required by FLAML as default estimator
 # auto-sklearn is Linux-only in practice; install/run it separately in Colab.
 
 # Dimensionality reduction

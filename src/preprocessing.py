@@ -22,20 +22,6 @@ def multi_hot_interests(series: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(data, index=series.index)
 
 
-def engineer_ratio_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Derived behavioral features. Not signal-guaranteed, but worth trying.
-    Returns a new DataFrame with only the engineered columns (caller concats).
-    """
-    eps = 1e-6
-    out = pd.DataFrame(index=df.index)
-    out["messages_per_match"] = df["message_sent_count"] / (df["mutual_matches"] + eps)
-    out["likes_to_swipe_ratio"] = df["likes_received"] / (df["app_usage_time_min"] + eps)
-    out["bio_effort"] = df["bio_length"] * df["profile_pics_count"]
-    out["night_user"] = ((df["last_active_hour"] >= 22) | (df["last_active_hour"] <= 4)).astype(int)
-    out["emoji_heavy"] = (df["emoji_usage_rate"] > 0.5).astype(int)
-    return out
-
 
 def label_encode(df: pd.DataFrame, cols: list[str]) -> tuple[pd.DataFrame, dict]:
     """

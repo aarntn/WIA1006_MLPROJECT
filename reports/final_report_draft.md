@@ -6,6 +6,19 @@ Before changing the project direction, we defined falsification criteria for the
 
 ## Methodology: AutoML Comparison Under Platform Constraints
 
-This project was developed on a Windows machine, so `auto-sklearn` could not be executed locally. The official auto-sklearn documentation states that auto-sklearn requires Linux and cannot run on Windows because it depends on Python's Unix-specific `resource` module. To keep the AutoML comparison executable and honest in the local environment, we used AutoGluon Tabular as the Windows-compatible AutoML benchmark and kept auto-sklearn as a documented Linux/Colab-only method rather than assigning it a placeholder result.
+This project was developed on Windows. `auto-sklearn` cannot run on Windows because it depends on Python's Unix-specific `resource` module. To keep the AutoML comparison fully executable without requiring Linux, WSL, or Docker, we used two Windows-native AutoML frameworks as benchmarks:
 
-The executed AutoGluon `best_quality` run used the same safe feature policy as the official supervised model: `mutual_matches` was the target, while `likes_received`, `match_outcome`, and the active target were excluded from the feature set. AutoGluon achieved **R2 = 0.000**, **MAE = 7.898**, and **RMSE = 9.096**, which is effectively identical to the dummy baseline and the tuned manual HistGradientBoosting model. This supports the conclusion that the low predictive performance is a property of the dataset and feature set, not simply a failure of manual model selection. We do not claim that auto-sklearn confirmed the result because it was not run in the Windows environment.
+1. **FLAML** (Fast and Lightweight AutoML, by Microsoft) — installs via `pip` on Windows, no system-level dependencies. It searched over LightGBM, XGBoost, Random Forest, and Extra Trees models within a 120-second budget.
+2. **AutoGluon Tabular** (`best_quality` preset) — a second Windows-compatible AutoML framework, run with a 600-second budget.
+
+Both used the same safe feature policy as the official supervised model: `mutual_matches` was the target, while `likes_received`, `match_outcome`, and the active target were excluded from the feature set.
+
+| Model | Backend | Holdout R2 | MAE | RMSE |
+|---|---|---:|---:|---:|
+| Dummy mean | manual baseline | -0.000 | 7.897 | 9.097 |
+| Best manual tuned HistGB | manual tuned | -0.003 | 7.909 | 9.108 |
+| FLAML AutoML | FLAML | -0.006 | 7.916 | 9.123 |
+| AutoGluon best\_quality | AutoGluon | 0.000 | 7.898 | 9.096 |
+| auto-sklearn | Linux/Colab only | — | — | — |
+
+All three executable models (manual HistGB, FLAML, and AutoGluon) produce near-zero R2 on the holdout set, supporting the conclusion that the low predictive performance is a property of the dataset and feature set rather than a failure of manual model selection. `auto-sklearn` is documented as a platform constraint and is not assigned a placeholder result.

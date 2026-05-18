@@ -28,11 +28,12 @@ polishing what exists, and adding a few things the rubric explicitly asks for.
 ## Master Checklist (ordered by priority)
 
 ### Code quality fixes (do these first — some are blocking)
-- [ ] **Q1** — Add `if __name__ == "__main__": main()` guard to `scripts/02_signal_test.py` (currently runs at import time)
+- [x] **Q1** — Add `if __name__ == "__main__": main()` guard to `scripts/02_signal_test.py` (already existed)
 - [x] **Q2** — Delete `scripts/plotting.py` — dead duplicate of `src/plotting.py`; all scripts already import from `src.plotting`
-- [ ] **Q3** — Delete or mark unused `engineer_ratio_features()` in `src/preprocessing.py` — duplicate of `add_engineered_features()` in `src/features.py`
-- [ ] **Q4** — Add `.fillna("Neutral")` to `outcome_3class()` in `src/preprocessing.py:68` — `.map()` silently returns NaN for unmapped labels
-- [ ] **Q5** — Add a feature selection step (rubric point 4): use the permutation importance already computed in `feature_importance_frame()` to drop the bottom-N features and train a "feature-selected" variant — this satisfies the rubric's explicit ask for feature selection/extraction
+- [x] **Q3** — Deleted `engineer_ratio_features()` from `src/preprocessing.py` (was unused; `add_engineered_features()` in `src/features.py` is the live version)
+- [x] **Q4** — `.fillna("Neutral")` in `outcome_3class()` already existed at line 54 of `src/preprocessing.py`
+- [x] **Q5** — Feature selection added to `scripts/04_train_engagement_models.py`: permutation-importance top-15 selector (`_ColumnSelector`), re-trains HistGB, result appears in model comparison plot
+- [x] **Q6** — Deleted `scripts/03_alternative_targets.py` (prototype superseded by script 04; was not in pipeline and regenerated orphaned figure `11_regression_diagnostics.png`)
 
 ### Deliverables (required to submit at all)
 - [ ] **D1** — Google Colab notebook with full pipeline
@@ -41,9 +42,9 @@ polishing what exists, and adding a few things the rubric explicitly asks for.
 - [ ] **D4** — 5-minute video (link in slides)
 
 ### Technical (affects 6% marks)
-- [ ] **T1** — Optional auto-sklearn comparison in Colab/Linux; AutoGluon local AutoML is already done
-- [ ] **T2** — Full-dataset run on 50k rows (remove --fast)
-- [ ] **T3** — SHAP explainability plot in modeling script + dashboard
+- [ ] **T1** — Optional auto-sklearn comparison in Colab/Linux; AutoGluon + FLAML local AutoML already done
+- [x] **T2** — Full-dataset run on 50k rows completed; tuned holdout R²=−0.001, MAE=7.892
+- [x] **T3** — SHAP beeswarm added to `scripts/04_train_engagement_models.py` (saves `14c_shap_beeswarm.png`); SHAP waterfall added to dashboard Prediction tab
 
 ### Dashboard polish (affects "application" marks under creativity)
 - [ ] **A1** — Project intro banner (context for cold readers)
@@ -53,9 +54,9 @@ polishing what exists, and adding a few things the rubric explicitly asks for.
 - [ ] **A5** — Better layout with `st.columns()`
 
 ### Bonus (portfolio quality + creativity mark)
-- [ ] **B1** — Learning curves
+- [x] **B1** — Learning curves (saves `14b_learning_curve.png`; already implemented in script 04)
 - [ ] **B2** — Segment-level regression
-- [ ] **B3** — 3-class confusion matrix figure
+- [x] **B3** — 3-class confusion matrix figure (saves `11_confusion_matrix_3class.png`; already in script 02)
 
 ---
 
@@ -440,7 +441,7 @@ def plot_learning_curve(model: Pipeline, X_train: pd.DataFrame, y_train: pd.Seri
     ax.set_ylabel("R²")
     ax.set_title("Learning curve — R² does not improve with more data")
     ax.legend()
-    save_fig(fig, "16_learning_curve", FIGDIR)
+    save_fig(fig, "14b_learning_curve", FIGDIR)
 ```
 
 Call it in `main()` after tuning: `plot_learning_curve(best_model, X_train, y_train)`
