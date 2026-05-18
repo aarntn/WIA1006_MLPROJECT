@@ -118,7 +118,11 @@ def metric_row(
 
 
 def baseline_rows(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series) -> list[dict[str, object]]:
-    from sklearn.ensemble import HistGradientBoostingRegressor  # not available in auto-sklearn's pinned sklearn
+    try:
+        from sklearn.ensemble import HistGradientBoostingRegressor
+    except ImportError:
+        from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401 — required for sklearn <0.24
+        from sklearn.ensemble import HistGradientBoostingRegressor
 
     rows: list[dict[str, object]] = []
 
