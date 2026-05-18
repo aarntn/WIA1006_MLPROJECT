@@ -34,7 +34,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -119,6 +118,8 @@ def metric_row(
 
 
 def baseline_rows(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series) -> list[dict[str, object]]:
+    from sklearn.ensemble import HistGradientBoostingRegressor  # not available in auto-sklearn's pinned sklearn
+
     rows: list[dict[str, object]] = []
 
     start = time.time()
