@@ -260,18 +260,39 @@ def update_engagement_summary(results: pd.DataFrame) -> None:
 
     ok = results[results["status"] == "ok"].sort_values("r2", ascending=False)
     blocked = results[results["status"] != "ok"]
+    autosklearn = results[results["model"] == "auto-sklearn"]
+    autosklearn_ok = not autosklearn.empty and (autosklearn["status"] == "ok").any()
 
     lines = [
         "## AutoML Comparison Under Platform Constraints",
         "",
-        "The project was developed and executed on Windows. The official auto-sklearn documentation states that "
-        "auto-sklearn requires Linux and cannot run on Windows because it depends on Python's Unix-specific "
-        "`resource` module. Therefore, AutoGluon is the executable local AutoML comparison, while auto-sklearn "
-        "is reported as a Linux/Colab-only backend and is not assigned a placeholder score.",
-        "",
-        "| Model | Backend | Status | Holdout R2 | MAE | RMSE |",
-        "|---|---|---|---:|---:|---:|",
     ]
+    if autosklearn_ok:
+        lines.extend(
+            [
+                "The project was developed on Windows, where auto-sklearn cannot run because it depends on "
+                "Python's Unix-specific `resource` module. To satisfy the strict AutoML comparison fairly, "
+                "auto-sklearn was executed in Google Colab/Linux, while AutoGluon remained the executable "
+                "Windows-compatible AutoML benchmark.",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "The project was developed and executed on Windows. The official auto-sklearn documentation states that "
+                "auto-sklearn requires Linux and cannot run on Windows because it depends on Python's Unix-specific "
+                "`resource` module. Therefore, AutoGluon is the executable local AutoML comparison, while auto-sklearn "
+                "is reported as a Linux/Colab-only backend and is not assigned a placeholder score.",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "| Model | Backend | Status | Holdout R2 | MAE | RMSE |",
+            "|---|---|---|---:|---:|---:|",
+        ]
+    )
     for _, row in results.iterrows():
         if row["status"] == "ok":
             lines.append(
@@ -302,16 +323,37 @@ def update_engagement_summary(results: pd.DataFrame) -> None:
     path.write_text(updated.strip() + "\n", encoding="utf-8")
 
 
-def write_outputs(results: list[dict[str, object]]) -> None:
+def merge_existing_results(results: list[dict[str, object]]) -> pd.DataFrame:
+    """Preserve previously executed AutoML rows when running one backend at a time."""
+    current = pd.DataFrame(results)
+    path = REPORTS_DIR / "automl_results.csv"
+    if not path.exists():
+        return current
+
+    existing = pd.read_csv(path)
+    existing = existing[~existing["model"].isin(current["model"])]
+    combined = pd.concat([current, existing], ignore_index=True)
+    order = {
+        "Dummy mean": 0,
+        "Best manual tuned HistGB": 1,
+        "auto-sklearn": 2,
+        "AutoGluon best_quality": 3,
+    }
+    combined["_order"] = combined["model"].map(order).fillna(99)
+    return combined.sort_values(["_order", "model"]).drop(columns="_order").reset_index(drop=True)
+
+
+def write_outputs(results: list[dict[str, object]]) -> pd.DataFrame:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     FIGDIR.mkdir(parents=True, exist_ok=True)
-    results_df = pd.DataFrame(results)
+    results_df = merge_existing_results(results)
     results_df.to_csv(REPORTS_DIR / "automl_results.csv", index=False)
     plot_automl_comparison(results_df)
     update_engagement_summary(results_df)
     print("  [saved] reports/automl_results.csv")
     print("  [saved] reports/figures/20_automl_comparison.png")
     print("  [updated] reports/engagement_summary.md")
+    return results_df
 
 
 def main() -> None:
@@ -343,8 +385,8 @@ def main() -> None:
                 }
             )
 
-    write_outputs(rows)
-    print(pd.DataFrame(rows).to_string(index=False))
+    results_df = write_outputs(rows)
+    print(results_df.to_string(index=False))
 
 
 if __name__ == "__main__":

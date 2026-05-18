@@ -37,6 +37,14 @@ def _safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     return numerator.astype(float) / denominator.replace(0, np.nan).astype(float)
 
 
+def make_dense_onehot_encoder() -> OneHotEncoder:
+    """Create a dense OneHotEncoder across old and new scikit-learn versions."""
+    try:
+        return OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    except TypeError:
+        return OneHotEncoder(handle_unknown="ignore", sparse=False)
+
+
 def add_engineered_features(
     df: pd.DataFrame,
     target_col: str = "mutual_matches",
@@ -130,7 +138,7 @@ class EngagementFeatureBuilder(BaseEstimator, TransformerMixin):
             if c in df.columns and c not in drop_cols and c != MULTI_LABEL_COL
         ]
 
-        self.onehot_ = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+        self.onehot_ = make_dense_onehot_encoder()
         if self.categorical_cols_:
             self.onehot_.fit(df[self.categorical_cols_].astype(str))
 

@@ -221,36 +221,18 @@ completed.
 
 **Optional strict-rubric run: auto-sklearn in Google Colab only** (Linux, not Windows).
 
-**Step 1**: In your Colab notebook, add a cell:
-```python
-!pip install auto-sklearn
+Use `notebooks/AUTOSKLEARN_COLAB_CELLS.md`. It creates a separate Python 3.9 conda
+environment in Colab, installs auto-sklearn from conda-forge, and runs:
+
+```bash
+python scripts/06_automl_comparison.py --backend autosklearn --sample 12000 --autosklearn-time 3600
 ```
 
-**Step 2**: Run this block:
-```python
-import pandas as pd
-from autosklearn.regression import AutoSklearnRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_absolute_error
+The script preserves the existing AutoGluon row in `reports/automl_results.csv`, replaces
+the blocked auto-sklearn row with real Colab numbers, writes
+`reports/automl_leaderboard_autosklearn.csv`, and regenerates Figure 20.
 
-df = pd.read_csv("dating_app_behavior_dataset_extended1.csv")
-
-# Same safe feature set as our official model
-drop_cols = ["match_outcome", "mutual_matches", "likes_received", "interest_tags"]
-X = pd.get_dummies(df.drop(columns=drop_cols), drop_first=True)
-y = df["mutual_matches"].astype(float)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-automl = AutoSklearnRegressor(time_left_for_this_task=300, per_run_time_limit=60, seed=42)
-automl.fit(X_train, y_train)
-
-preds = automl.predict(X_test)
-print(f"Auto-sklearn  R2={r2_score(y_test, preds):.3f}  MAE={mean_absolute_error(y_test, preds):.3f}")
-print(automl.leaderboard())
-```
-
-**Step 3**: Add a comparison table in the Colab notebook and in the report:
+After the Colab run, add this comparison table in the notebook and in the report:
 
 | Model | CV R2 | Holdout R2 | MAE |
 |-------|-------|-----------|-----|
@@ -261,7 +243,7 @@ print(automl.leaderboard())
 **Expected result**: auto-sklearn will probably produce R² near zero, but this must be
 reported only after a real Colab/Linux run.
 
-**Step 4**: Write 2–3 sentences interpreting the result for the report.
+Write 2-3 sentences interpreting the result for the report.
 
 ---
 
