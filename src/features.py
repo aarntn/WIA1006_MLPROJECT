@@ -162,7 +162,8 @@ class EngagementFeatureBuilder(BaseEstimator, TransformerMixin):
 
         if self.categorical_cols_:
             encoded = self.onehot_.transform(df[self.categorical_cols_].astype(str))
-            cat_names = self.onehot_.get_feature_names_out(self.categorical_cols_)
+            _get_names = getattr(self.onehot_, "get_feature_names_out", None) or self.onehot_.get_feature_names
+            cat_names = _get_names(self.categorical_cols_)
             parts.append(pd.DataFrame(encoded, columns=cat_names, index=df.index))
 
         if self.interest_tags_:
@@ -194,6 +195,7 @@ class EngagementFeatureBuilder(BaseEstimator, TransformerMixin):
     def _feature_names(self) -> list[str]:
         names = list(self.numeric_cols_)
         if self.categorical_cols_:
-            names.extend(self.onehot_.get_feature_names_out(self.categorical_cols_).tolist())
+            _get_names = getattr(self.onehot_, "get_feature_names_out", None) or self.onehot_.get_feature_names
+            names.extend(_get_names(self.categorical_cols_).tolist())
         names.extend(f"{MULTI_LABEL_COL}__{tag}" for tag in self.interest_tags_)
         return names
