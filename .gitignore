@@ -15,12 +15,14 @@ env/
 # Data artifacts (keep raw/, ignore processed outputs)
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/segmentation_assignments.csv
 
 # Models
 models/*.pkl
 models/*.joblib
 models/automl/
 !models/.gitkeep
+!models/best_mutual_matches_model.joblib
 
 # Reports (figures tracked as submission evidence)
 reports/figures/*.pdf
