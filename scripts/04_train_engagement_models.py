@@ -585,12 +585,52 @@ def write_summary(
         json.dumps(tuned_search.best_params_, indent=2),
         "```",
         "",
-        "## AutoML Note",
-        "",
-        "Run `scripts/06_automl_comparison.py` after training to append the executed "
-        "AutoGluon comparison. auto-sklearn should only be reported if it is actually "
-        "run in Colab/Linux.",
     ]
+
+    automl_path = REPORTS_DIR / "automl_results.csv"
+    if automl_path.exists():
+        automl = pd.read_csv(automl_path)
+        ok = automl[automl["status"] == "ok"].sort_values("r2", ascending=False)
+        lines.extend(
+            [
+                "",
+                "## AutoML Comparison Under Platform Constraints",
+                "",
+                "The project was developed on Windows. FLAML and AutoGluon were run "
+                "locally as Windows-compatible AutoML benchmarks, and auto-sklearn was "
+                "run separately in Colab/Linux.",
+                "",
+                "| Model | Backend | Status | Holdout R2 | MAE | RMSE |",
+                "|---|---|---|---:|---:|---:|",
+            ]
+        )
+        for _, row in automl.iterrows():
+            lines.append(
+                f"| {row['model']} | {row['backend']} | {row['status']} | "
+                f"{row['r2']:.3f} | {row['mae']:.3f} | {row['rmse']:.3f} |"
+            )
+        if not ok.empty:
+            best = ok.iloc[0]
+            lines.extend(
+                [
+                    "",
+                    "Best observed AutoML/manual comparison row: "
+                    f"**{best['model']}** ({best['backend']}, holdout R2={best['r2']:.3f}). "
+                    "All comparisons use the safe feature set with `likes_received`, "
+                    "`match_outcome`, and the active target excluded.",
+                ]
+            )
+    else:
+        lines.extend(
+            [
+                "",
+                "## AutoML Note",
+                "",
+                "Run `scripts/06_automl_comparison.py` after training to append the "
+                "executed AutoML comparison.",
+            ]
+        )
+
     (REPORTS_DIR / "engagement_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("  [saved] reports/engagement_summary.md")
 

@@ -25,7 +25,7 @@
 
 ## AutoML Comparison Under Platform Constraints
 
-The project was developed on Windows. FLAML is a Windows-native AutoML framework that does not depend on Unix-specific system resources and was executed locally. auto-sklearn was additionally executed in Google Colab/Linux. AutoGluon Tabular was also used as a second Windows-compatible benchmark.
+The project was developed on Windows. FLAML and AutoGluon were run locally as Windows-compatible AutoML benchmarks, and auto-sklearn was run separately in Colab/Linux.
 
 | Model | Backend | Status | Holdout R2 | MAE | RMSE |
 |---|---|---|---:|---:|---:|
