@@ -529,6 +529,7 @@ def kpi_strip(df: pd.DataFrame) -> None:
 
 _NAV_ITEMS = [
     ("Overview", "▣"),
+    ("Analysis", "◈"),
     ("Predict",  "◎"),
     ("Evidence", "≡"),
     ("Segments", "◉"),
@@ -689,6 +690,12 @@ _PAGE_META: dict[str, tuple[str, str, str]] = {
         "What the Numbers Show",
         "10 regression models, 3 AutoML frameworks, and 23 statistical tests — "
         "all run on the same data, all arriving at the same answer.",
+    ),
+    "Analysis": (
+        "Exploratory Data Analysis",
+        "Data Analysis",
+        "How we explored the data before building any models — quality checks, "
+        "correlations, the features we engineered, and 23 statistical tests that all came back empty.",
     ),
     "Segments": (
         "User Segmentation",
@@ -889,6 +896,273 @@ def tab_evidence() -> None:
             st.dataframe(automl[["model","backend","status","r2","mae","rmse"]].round(4), width="stretch")
 
 
+def tab_analysis(df: pd.DataFrame) -> None:
+    audit = load_csv(ROOT / "reports" / "eda_quality_audit.csv")
+
+    # ── Section 1: Data Quality ───────────────────────────────────────────────
+    st.markdown('<span class="section-label">Data Quality at a Glance</span>', unsafe_allow_html=True)
+
+    num_cols_count = int((audit["outlier count (IQR rule for numeric)"] != "").sum()) if audit is not None else 12
+    invalid_count  = int((audit["invalid values found (yes/no)"] == "yes").sum()) if audit is not None else 0
+
+    st.markdown(f"""
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.7rem;margin-bottom:1.2rem;">
+        <div class="kpi-card neutral">
+            <span class="kpi-label">Total Columns</span>
+            <span class="kpi-value">25</span>
+            <span class="kpi-sub">features + target</span>
+        </div>
+        <div class="kpi-card green">
+            <span class="kpi-label">Missing Values</span>
+            <span class="kpi-value">0</span>
+            <span class="kpi-sub">across all 50,000 rows</span>
+        </div>
+        <div class="kpi-card green">
+            <span class="kpi-label">Invalid Values</span>
+            <span class="kpi-value">{invalid_count}</span>
+            <span class="kpi-sub">no inf / empty strings</span>
+        </div>
+        <div class="kpi-card amber">
+            <span class="kpi-label">Outlier Features</span>
+            <span class="kpi-value">1</span>
+            <span class="kpi-sub">emoji_usage_rate · 311 rows</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.expander("Full data quality audit — all 25 columns"):
+        if audit is not None:
+            st.dataframe(audit, width="stretch")
+        else:
+            st.caption("Run `python scripts/01_eda.py` to generate this table.")
+
+    st.divider()
+
+    # ── Section 2: Distributions & Correlations ───────────────────────────────
+    st.markdown('<span class="section-label">Distributions &amp; Correlations</span>', unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        <p style="font-size:0.8rem;color:var(--txt2);margin-bottom:0.5rem;">
+        <b style="color:var(--txt);">Numeric distributions</b> — all 12 numeric features are
+        uniformly spread with nearly identical mean and median lines. This is a strong
+        fingerprint of synthetic data: real distributions are skewed and lumpy.
+        </p>""", unsafe_allow_html=True)
+        p = FIGDIR / "02_numeric_distributions.png"
+        if p.exists():
+            st.image(str(p), width="stretch")
+
+    with col2:
+        st.markdown("""
+        <p style="font-size:0.8rem;color:var(--txt2);margin-bottom:0.5rem;">
+        <b style="color:var(--txt);">Correlation heatmap</b> — only two pairs show |r| ≥ 0.05:
+        <code>height_cm ↔ weight_kg</code> (physical, expected) and
+        <code>likes_received ↔ mutual_matches</code> (which revealed the leakage risk).
+        Everything else is noise-level.
+        </p>""", unsafe_allow_html=True)
+        p = FIGDIR / "03_correlation_heatmap.png"
+        if p.exists():
+            st.image(str(p), width="stretch")
+
+    st.divider()
+
+    # ── Section 3: Engineered Features ───────────────────────────────────────
+    st.markdown('<span class="section-label">Features We Engineered</span>', unsafe_allow_html=True)
+    st.markdown("""
+    <p style="font-size:0.85rem;color:var(--txt2);margin-bottom:1rem;">
+    We added 6 behavioural features on top of the 25 raw columns. None improved CV R² —
+    confirming the absence of signal rather than a feature-engineering gap.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.7rem;margin-bottom:0.5rem;">
+
+        <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--blue);
+                    border-radius:9px;padding:0.85rem 1rem;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+                        color:var(--blue);margin-bottom:0.35rem;">bio_effort</div>
+            <code style="font-size:0.75rem;color:var(--txt);background:var(--card2);padding:2px 6px;
+                         border-radius:4px;">bio_length × profile_pics_count</code>
+            <div style="font-size:0.78rem;color:var(--txt2);margin-top:0.4rem;line-height:1.55;">
+                Profile completeness proxy — users who write more and upload more photos may signal higher intent.
+            </div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--blue);
+                    border-radius:9px;padding:0.85rem 1rem;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+                        color:var(--blue);margin-bottom:0.35rem;">night_user</div>
+            <code style="font-size:0.75rem;color:var(--txt);background:var(--card2);padding:2px 6px;
+                         border-radius:4px;">last_active_hour ≥ 22 or ≤ 4 → 1</code>
+            <div style="font-size:0.78rem;color:var(--txt2);margin-top:0.4rem;line-height:1.55;">
+                Binary flag for late-night activity — different usage patterns might correlate with match behaviour.
+            </div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--blue);
+                    border-radius:9px;padding:0.85rem 1rem;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+                        color:var(--blue);margin-bottom:0.35rem;">emoji_heavy</div>
+            <code style="font-size:0.75rem;color:var(--txt);background:var(--card2);padding:2px 6px;
+                         border-radius:4px;">emoji_usage_rate &gt; 0.5 → 1</code>
+            <div style="font-size:0.78rem;color:var(--txt2);margin-top:0.4rem;line-height:1.55;">
+                Communication style flag — heavy emoji use may indicate a more expressive, approachable persona.
+            </div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--amber);
+                    border-radius:9px;padding:0.85rem 1rem;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+                        color:var(--amber);margin-bottom:0.35rem;">likes_per_usage_min</div>
+            <code style="font-size:0.75rem;color:var(--txt);background:var(--card2);padding:2px 6px;
+                         border-radius:4px;">likes_received ÷ app_usage_time_min</code>
+            <div style="font-size:0.78rem;color:var(--txt2);margin-top:0.4rem;line-height:1.55;">
+                Engagement efficiency — likes earned per minute of app use, normalising for session length.
+            </div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--amber);
+                    border-radius:9px;padding:0.85rem 1rem;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+                        color:var(--amber);margin-bottom:0.35rem;">messages_per_match</div>
+            <code style="font-size:0.75rem;color:var(--txt);background:var(--card2);padding:2px 6px;
+                         border-radius:4px;">message_sent_count ÷ mutual_matches</code>
+            <div style="font-size:0.78rem;color:var(--txt2);margin-top:0.4rem;line-height:1.55;">
+                Conversation rate — how many messages a user sends per match, capturing follow-through behaviour.
+            </div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--amber);
+                    border-radius:9px;padding:0.85rem 1rem;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+                        color:var(--amber);margin-bottom:0.35rem;">match_yield_from_likes</div>
+            <code style="font-size:0.75rem;color:var(--txt);background:var(--card2);padding:2px 6px;
+                         border-radius:4px;">mutual_matches ÷ likes_received</code>
+            <div style="font-size:0.78rem;color:var(--txt2);margin-top:0.4rem;line-height:1.55;">
+                Conversion rate — what fraction of incoming likes turn into mutual matches.
+            </div>
+        </div>
+
+    </div>
+    <p style="font-size:0.78rem;color:var(--txt3);margin-top:0.5rem;">
+        Blue = profile / behaviour flags &nbsp;·&nbsp; Amber = ratio / efficiency features.
+        All 6 excluded the active target from their denominators to prevent leakage.
+    </p>
+    """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ── Section 4: Statistical Tests ──────────────────────────────────────────
+    st.markdown('<span class="section-label">Statistical Tests — 23 Total, 0 Survive Correction</span>', unsafe_allow_html=True)
+
+    chi_data = pd.DataFrame([
+        ("gender",             69.85, 45,  0.0102, True),
+        ("sexual_orientation", 80.44, 63,  0.0684, False),
+        ("zodiac_sign",       107.98, 99,  0.2525, False),
+        ("education_level",    71.50, 72,  0.4943, False),
+        ("income_bracket",     52.20, 54,  0.5442, False),
+        ("body_type",          41.87, 45,  0.6055, False),
+        ("relationship_intent",40.56, 45,  0.6604, False),
+        ("swipe_time_of_day",  41.22, 45,  0.6330, False),
+        ("swipe_right_label",  23.01, 27,  0.6842, False),
+        ("app_usage_time_label",30.96,54,  0.9950, False),
+        ("location_type",      29.30, 45,  0.9662, False),
+    ], columns=["Feature", "χ²", "dof", "p-value", "Nom. sig."])
+
+    anova_data = pd.DataFrame([
+        ("height_cm",          1.377, 0.1920, False),
+        ("weight_kg",          1.628, 0.1009, False),
+        ("swipe_right_ratio",  1.446, 0.1621, False),
+        ("mutual_matches",     0.909, 0.5156, False),
+        ("message_sent_count", 0.836, 0.5825, False),
+        ("last_active_hour",   0.830, 0.5884, False),
+        ("likes_received",     0.777, 0.6374, False),
+        ("profile_pics_count", 0.703, 0.7067, False),
+        ("emoji_usage_rate",   0.705, 0.7050, False),
+        ("app_usage_time_min", 0.655, 0.7506, False),
+        ("age",                0.570, 0.8228, False),
+        ("bio_length",         0.222, 0.9915, False),
+    ], columns=["Feature", "F-stat", "p-value", "Nom. sig."])
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        <p style="font-size:0.8rem;color:var(--txt2);margin-bottom:0.5rem;">
+        <b style="color:var(--txt);">Chi-square</b> — categorical features vs <code>match_outcome</code>.
+        Only <code>gender</code> reached p &lt; 0.05 (uncorrected), but p = 0.0102 &gt; Bonferroni
+        threshold of 0.00455 — so even that one fails correction.
+        </p>""", unsafe_allow_html=True)
+        chi_disp = chi_data.copy()
+        chi_disp["p-value"] = chi_disp["p-value"].apply(lambda x: f"{x:.4f}")
+        chi_disp["χ²"]      = chi_disp["χ²"].apply(lambda x: f"{x:.2f}")
+        chi_disp["Nom. sig."] = chi_disp["Nom. sig."].map({True: "✓ p<0.05", False: "—"})
+        st.dataframe(chi_disp, width="stretch", hide_index=True)
+
+    with col2:
+        st.markdown("""
+        <p style="font-size:0.8rem;color:var(--txt2);margin-bottom:0.5rem;">
+        <b style="color:var(--txt);">One-way ANOVA</b> — numeric features vs <code>match_outcome</code>.
+        Zero features reach p &lt; 0.05 even before any correction. F-statistics are all
+        near 1.0, indicating group means are indistinguishable.
+        </p>""", unsafe_allow_html=True)
+        anova_disp = anova_data.copy()
+        anova_disp["p-value"] = anova_disp["p-value"].apply(lambda x: f"{x:.4f}")
+        anova_disp["F-stat"]  = anova_disp["F-stat"].apply(lambda x: f"{x:.3f}")
+        anova_disp["Nom. sig."] = anova_disp["Nom. sig."].map({True: "✓ p<0.05", False: "—"})
+        st.dataframe(anova_disp, width="stretch", hide_index=True)
+
+    # Correction summary
+    st.markdown("""
+    <div style="background:var(--card);border:1px solid var(--border);border-left:4px solid var(--red);
+                border-radius:9px;padding:1rem 1.2rem;margin-top:0.8rem;">
+        <div style="font-size:0.78rem;font-weight:700;color:#FCA5A5;margin-bottom:0.5rem;
+                    text-transform:uppercase;letter-spacing:0.07em;">Multiple-Testing Correction Results</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;">
+            <div style="font-size:0.82rem;color:var(--txt2);">
+                <b style="color:var(--txt);">Total tests:</b> 11 chi-square + 12 ANOVA = <b style="color:var(--txt);">23</b>
+            </div>
+            <div style="font-size:0.82rem;color:var(--txt2);">
+                <b style="color:var(--txt);">Bonferroni</b> threshold: α/11 = 0.00455 →
+                <b style="color:#FCA5A5;">0 / 11</b> survive
+            </div>
+            <div style="font-size:0.82rem;color:var(--txt2);">
+                <b style="color:var(--txt);">BH-FDR</b> (q = 0.05, all 23 tests) →
+                <b style="color:#FCA5A5;">0 / 23</b> survive
+            </div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--txt3);margin-top:0.6rem;line-height:1.6;">
+            Corrected conclusion: <b style="color:var(--txt2);">zero of 23 feature–target tests are statistically significant</b>.
+            This is consistent with a synthetic data generator that samples each column independently of the target.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ── Section 5: Target distribution ───────────────────────────────────────
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<span class="section-label">Target Distribution</span>', unsafe_allow_html=True)
+        st.markdown("""
+        <p style="font-size:0.8rem;color:var(--txt2);margin-bottom:0.5rem;">
+        10 outcome classes with a balance ratio of <b style="color:var(--txt);">1.000</b> — each class has
+        almost exactly 5,000 rows. Perfect balance in a real dataset is extraordinarily unlikely.
+        It is the clearest fingerprint that labels were assigned synthetically.
+        </p>""", unsafe_allow_html=True)
+        p = FIGDIR / "01_target_distribution.png"
+        if p.exists():
+            st.image(str(p), width="stretch")
+    with col2:
+        st.markdown('<span class="section-label">Feature Means by Outcome</span>', unsafe_allow_html=True)
+        st.markdown("""
+        <p style="font-size:0.8rem;color:var(--txt2);margin-bottom:0.5rem;">
+        Numeric feature means grouped by match outcome. If any feature predicted the target,
+        you would see clear separation between the coloured lines. All lines overlap completely.
+        </p>""", unsafe_allow_html=True)
+        p = FIGDIR / "06_means_by_outcome.png"
+        if p.exists():
+            st.image(str(p), width="stretch")
+
+
 def tab_segments(df: pd.DataFrame) -> None:
     st.info("Silhouette score = 0.019 (below the 0.25 'weak structure' threshold). Segments are descriptive profiles, not tight natural clusters.")
 
@@ -965,6 +1239,7 @@ def main() -> None:
     # Compact breadcrumb
     _section_labels = {
         "Overview": "Project Overview",
+        "Analysis": "Data Analysis",
         "Predict":  "Engagement Prediction",
         "Evidence": "Model Evidence",
         "Segments": "User Segmentation",
@@ -983,6 +1258,8 @@ def main() -> None:
 
     if section == "Overview":
         tab_overview(df)
+    elif section == "Analysis":
+        tab_analysis(df)
     elif section == "Predict":
         tab_predict(df)
     elif section == "Evidence":
