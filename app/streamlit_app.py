@@ -122,52 +122,43 @@ def apply_theme() -> None:
         word-break: break-word !important; overflow-wrap: break-word !important;
     }
 
-    /* ────────────────────────────────────────────────────────
-       SIDEBAR NAV — row aesthetic, not button aesthetic
-       Active = soft surface lift (like Nexus #f0f0f0 equivalent)
-              with bold white text. No colored pill, no border.
-       Inactive = transparent, muted text.
-       Hover = barely-there tint.
-    ──────────────────────────────────────────────────────── */
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"],
-    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
-        margin: 0 !important; padding: 0 !important; width: 100% !important;
+    /* ── Sidebar nav: pure HTML anchors — zero Streamlit button interference ── */
+    .nav-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        width: 100%;
+        margin: 0;
+        padding: 0;
     }
-    /* Base row style — applies to both active and inactive */
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button,
-    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
+    .nav-item {
+        display: block !important;
         width: 100% !important;
-        text-align: left !important;
-        justify-content: flex-start !important;
+        box-sizing: border-box !important;
+        padding: 0.55rem 0.85rem !important;
         border-radius: 6px !important;
-        padding: 0.55rem 0.8rem !important;
-        font-size: 0.875rem !important;
-        line-height: 1 !important;
-        letter-spacing: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        transition: background 0.1s, color 0.1s !important;
-    }
-    /* Inactive row — plain text, no chrome at all */
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button {
-        background: transparent !important;
+        text-decoration: none !important;
         color: var(--txt3) !important;
+        font-size: 0.875rem !important;
         font-weight: 500 !important;
+        line-height: 1.1 !important;
+        letter-spacing: 0.01em !important;
+        transition: background 0.1s ease, color 0.1s ease !important;
+        cursor: pointer !important;
     }
-    /* Inactive hover — whisper of a lift */
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button:hover {
+    .nav-item:hover {
         background: rgba(255,255,255,0.05) !important;
         color: var(--txt2) !important;
+        text-decoration: none !important;
     }
-    /* Active row — surface lift only, white text, bold — Nexus f0f0f0 equivalent */
-    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
+    .nav-active {
         background: rgba(255,255,255,0.09) !important;
         color: var(--txt) !important;
         font-weight: 700 !important;
-        box-shadow: none !important;
     }
-    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button:hover {
+    .nav-active:hover {
         background: rgba(255,255,255,0.12) !important;
+        color: var(--txt) !important;
     }
 
     /* ── Typography ── */
@@ -371,9 +362,11 @@ _NAV_ITEMS = [
 ]
 
 def render_sidebar() -> str:
-    # Init page state
-    if "page" not in st.session_state:
-        st.session_state.page = "Overview"
+    # URL-based routing: persists across browser refreshes, no session state needed
+    _valid = {item[0] for item in _NAV_ITEMS}
+    page = st.query_params.get("page", "Overview")
+    if page not in _valid:
+        page = "Overview"
 
     with st.sidebar:
         # ── Brand — flush to top, no gap above ──
@@ -403,19 +396,15 @@ def render_sidebar() -> str:
                   color:#4A6180;margin:0 0 0.25rem 0.25rem;padding:0;line-height:1;">General</p>
         """, unsafe_allow_html=True)
 
-        # ── Nav buttons — active = primary (blue tint), inactive = secondary (transparent) ──
-        for page, icon in _NAV_ITEMS:
-            is_active = st.session_state.page == page
-            if st.button(
-                f"{icon}   {page}",
-                key=f"nav_{page}",
-                use_container_width=True,
-                type="primary" if is_active else "secondary",
-            ):
-                st.session_state.page = page
-                st.rerun()
+        # ── Nav: HTML anchors with ?page= routing — pure CSS, zero Streamlit button override ──
+        nav_html = '<div class="nav-menu">'
+        for name, icon in _NAV_ITEMS:
+            cls = "nav-item nav-active" if page == name else "nav-item"
+            nav_html += f'<a href="?page={name}" class="{cls}" target="_self">{icon}&nbsp;&nbsp;{name}</a>'
+        nav_html += '</div>'
+        st.markdown(nav_html, unsafe_allow_html=True)
 
-        st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:0.4rem;'></div>", unsafe_allow_html=True)
 
         # ── Key Finding ──
         st.markdown("""
@@ -476,7 +465,7 @@ def render_sidebar() -> str:
         </div>
         """, unsafe_allow_html=True)
 
-    return st.session_state.page
+    return page
 
 
 # ── SHAP Waterfall ────────────────────────────────────────────────────────────
