@@ -88,84 +88,87 @@ def apply_theme() -> None:
     [data-testid="stHeader"] { background: var(--bg) !important; border-bottom: 1px solid var(--border); }
     [data-testid="stSidebar"] { background: var(--surface) !important; border-right: 1px solid var(--border) !important; }
     [data-testid="stSidebar"] > div { background: var(--surface) !important; overflow-y: auto !important; overflow-x: hidden !important; }
-    /* Kill all default top padding so brand sits at the very top */
-    [data-testid="stSidebar"] > div > div:first-child { padding-top: 0 !important; margin-top: 0 !important; }
-    [data-testid="stSidebar"] section > div { padding-top: 0.3rem !important; padding-bottom: 0.5rem !important; }
+    /* Zero all default Streamlit sidebar padding so brand sits flush at top */
+    [data-testid="stSidebar"] > div > div:first-child,
+    [data-testid="stSidebar"] > div > div:first-child > div:first-child {
+        padding-top: 0 !important; margin-top: 0 !important;
+    }
+    [data-testid="stSidebar"] section > div {
+        padding-top: 0 !important; padding-bottom: 0.5rem !important;
+    }
     .block-container { padding-top: 0.75rem; padding-bottom: 3rem; max-width: 1200px; }
 
-    /* ── Sidebar collapse arrow (Material Icons must keep their font) ── */
+    /* ── Sidebar collapse arrow — preserve Material Icons font ── */
     [data-testid="stSidebarCollapseButton"] span,
     [data-testid="stSidebarCollapsedControl"] span,
     [data-testid="stSidebarCollapseButton"] button span,
     [data-testid="stSidebarCollapsedControl"] button span {
         font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
-        font-size: 1.25rem !important;
+        font-size: 1.2rem !important;
     }
     [data-testid="stSidebarCollapseButton"] button,
     [data-testid="stSidebarCollapsedControl"] button {
-        background: transparent !important;
-        border: none !important;
-        color: var(--txt3) !important;
+        background: transparent !important; border: none !important; color: var(--txt3) !important;
     }
 
-    /* ── Sidebar: all markdown content blocks stretch full width ── */
+    /* ── Sidebar markdown containers — always stretch full width ── */
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] > div {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
+        width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
     }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] div,
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
+        max-width: 100% !important; box-sizing: border-box !important;
+        word-break: break-word !important; overflow-wrap: break-word !important;
     }
 
-    /* ── Sidebar nav: button-based — looks like rows, not buttons ── */
+    /* ────────────────────────────────────────────────────────
+       SIDEBAR NAV — row aesthetic, not button aesthetic
+       Active = soft surface lift (like Nexus #f0f0f0 equivalent)
+              with bold white text. No colored pill, no border.
+       Inactive = transparent, muted text.
+       Hover = barely-there tint.
+    ──────────────────────────────────────────────────────── */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"],
     [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
-        margin: 1px 0 !important;
-        width: 100% !important;
+        margin: 0 !important; padding: 0 !important; width: 100% !important;
     }
+    /* Base row style — applies to both active and inactive */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button,
     [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
         width: 100% !important;
         text-align: left !important;
         justify-content: flex-start !important;
         border-radius: 6px !important;
-        padding: 0.52rem 0.85rem !important;
+        padding: 0.55rem 0.8rem !important;
         font-size: 0.875rem !important;
-        font-weight: 500 !important;
-        border: none !important;
-        border-left: 2px solid transparent !important;
-        transition: background 0.12s ease, color 0.12s ease, border-left-color 0.12s ease !important;
         line-height: 1 !important;
-        letter-spacing: 0.01em !important;
+        letter-spacing: 0 !important;
+        border: none !important;
         box-shadow: none !important;
+        transition: background 0.1s, color 0.1s !important;
     }
-    /* Inactive — invisible until hovered: plain row, no chrome */
+    /* Inactive row — plain text, no chrome at all */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button {
         background: transparent !important;
         color: var(--txt3) !important;
+        font-weight: 500 !important;
     }
+    /* Inactive hover — whisper of a lift */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button:hover {
-        background: rgba(255,255,255,0.045) !important;
-        color: var(--txt) !important;
-        border-left-color: rgba(59,130,246,0.5) !important;
+        background: rgba(255,255,255,0.05) !important;
+        color: var(--txt2) !important;
     }
-    /* Active — barely-there tint + left accent, white readable text */
+    /* Active row — surface lift only, white text, bold — Nexus f0f0f0 equivalent */
     [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
-        background: rgba(255,255,255,0.06) !important;
+        background: rgba(255,255,255,0.09) !important;
         color: var(--txt) !important;
         font-weight: 700 !important;
-        border-left-color: #3B82F6 !important;
         box-shadow: none !important;
     }
     [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button:hover {
-        background: rgba(255,255,255,0.09) !important;
+        background: rgba(255,255,255,0.12) !important;
     }
 
     /* ── Typography ── */
@@ -374,29 +377,31 @@ def render_sidebar() -> str:
         st.session_state.page = "Overview"
 
     with st.sidebar:
-        # ── Brand ──
+        # ── Brand — flush to top, no gap above ──
         st.markdown("""
-        <div style="width:100%;box-sizing:border-box;padding:0.3rem 0 0.85rem;border-bottom:1px solid #1C2E4A;margin-bottom:0.85rem;">
-            <div style="display:flex;align-items:center;gap:0.65rem;">
-                <div style="flex-shrink:0;width:34px;height:34px;background:#3B82F6;border-radius:9px;
+        <div style="width:100%;box-sizing:border-box;
+                    padding:1.1rem 0.1rem 0.9rem;
+                    border-bottom:1px solid #1C2E4A;margin-bottom:1rem;">
+            <div style="display:flex;align-items:center;gap:0.7rem;">
+                <div style="flex-shrink:0;width:32px;height:32px;background:#3B82F6;border-radius:8px;
                             display:flex;align-items:center;justify-content:center;">
-                    <span style="font-family:'Inter Tight',sans-serif;font-size:1rem;font-weight:900;
-                                 color:#fff;line-height:1;letter-spacing:-0.03em;">S</span>
+                    <span style="font-family:'Inter Tight',sans-serif;font-size:0.95rem;font-weight:900;
+                                 color:#fff;line-height:1;">S</span>
                 </div>
                 <div>
-                    <div style="font-family:'Inter Tight',sans-serif;font-size:1.45rem;font-weight:800;
-                                color:#DDE8F8;line-height:1;letter-spacing:-0.025em;">Swipe Atlas</div>
-                    <div style="font-size:0.62rem;color:#3B82F6;font-weight:700;text-transform:uppercase;
-                                letter-spacing:0.1em;margin-top:0.18rem;">ML Dashboard</div>
+                    <div style="font-family:'Inter Tight',sans-serif;font-size:1.3rem;font-weight:800;
+                                color:#DDE8F8;line-height:1;letter-spacing:-0.02em;">Swipe Atlas</div>
+                    <div style="font-size:0.6rem;color:#3B82F6;font-weight:700;text-transform:uppercase;
+                                letter-spacing:0.11em;margin-top:0.2rem;">ML Dashboard</div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Nav section label ──
+        # ── GENERAL section label ──
         st.markdown("""
-        <p style="font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;
-                  color:#4A6180;margin:0 0 0.35rem 0.1rem;padding:0;">General</p>
+        <p style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;
+                  color:#4A6180;margin:0 0 0.25rem 0.25rem;padding:0;line-height:1;">General</p>
         """, unsafe_allow_html=True)
 
         # ── Nav buttons — active = primary (blue tint), inactive = secondary (transparent) ──
