@@ -107,14 +107,13 @@ def apply_theme() -> None:
         color: var(--txt3) !important;
     }
 
-    /* ── Sidebar: all content blocks stretch full width ── */
+    /* ── Sidebar: all markdown content blocks stretch full width ── */
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] > div {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
     }
-    /* Cards and text inside sidebar markdown containers wrap and stretch */
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] div,
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
@@ -124,61 +123,48 @@ def apply_theme() -> None:
         overflow-wrap: break-word !important;
     }
 
-    /* ── Sidebar radio → styled nav menu ── */
-    /* Full width chain: every wrapper must stretch so the highlight fills sidebar */
-    [data-testid="stSidebar"] [data-testid="stRadio"],
-    [data-testid="stSidebar"] [data-testid="stRadio"] > div,
-    [data-testid="stSidebar"] [data-testid="stRadio"] > div > div {
+    /* ── Sidebar nav: button-based — width 100% is native, no CSS hacks needed ── */
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"],
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
+        margin: 1px 0 !important;
         width: 100% !important;
-        box-sizing: border-box !important;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
-        gap: 2px !important;
-        flex-direction: column !important;
-        display: flex !important;
-    }
-    /* Hide the radio widget label row entirely */
-    [data-testid="stSidebar"] [data-testid="stRadio"] [data-testid="stWidgetLabel"],
-    [data-testid="stSidebar"] [data-testid="stRadio"] > label {
-        display: none !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label {
-        display: flex !important;
-        align-items: center !important;
-        padding: 0.5rem 0.8rem !important;
-        border-radius: 7px !important;
-        cursor: pointer !important;
-        transition: background 0.15s, border-left-color 0.15s !important;
-        border-left: 3px solid transparent !important;
-        margin: 0 !important;
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
         width: 100% !important;
-        box-sizing: border-box !important;
-        gap: 0 !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
-        background: rgba(59,130,246,0.07) !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
-        background: rgba(59,130,246,0.13) !important;
-        border-left-color: #3B82F6 !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
-        color: var(--txt3) !important;
-        font-size: 0.88rem !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        border-radius: 8px !important;
+        padding: 0.55rem 0.9rem !important;
+        font-size: 0.875rem !important;
         font-weight: 500 !important;
-        margin: 0 !important;
+        border: none !important;
+        border-left: 3px solid transparent !important;
+        transition: background 0.15s, border-left-color 0.15s, color 0.15s !important;
         line-height: 1 !important;
+        letter-spacing: 0.01em !important;
+        box-shadow: none !important;
     }
-    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
+    /* Inactive nav item */
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button {
+        background: transparent !important;
+        color: var(--txt3) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button:hover {
+        background: rgba(59,130,246,0.07) !important;
+        color: var(--txt2) !important;
+        border-left-color: rgba(59,130,246,0.35) !important;
+    }
+    /* Active nav item */
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
+        background: rgba(59,130,246,0.15) !important;
         color: #93C5FD !important;
         font-weight: 700 !important;
+        border-left-color: #3B82F6 !important;
+        box-shadow: none !important;
     }
-    /* Hide ALL radio circle indicators — multiple selector layers for Streamlit versions */
-    [data-testid="stSidebar"] [data-baseweb="radio"],
-    [data-testid="stSidebar"] [data-testid="stRadio"] [role="radio"],
-    [data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child,
-    [data-testid="stSidebar"] [data-testid="stRadio"] input[type="radio"] {
-        display: none !important;
+    [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button:hover {
+        background: rgba(59,130,246,0.22) !important;
     }
 
     /* ── Typography ── */
@@ -374,79 +360,118 @@ def kpi_strip(df: pd.DataFrame) -> None:
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 
+_NAV_ITEMS = [
+    ("Overview", "▣"),
+    ("Predict",  "◎"),
+    ("Evidence", "≡"),
+    ("Segments", "◉"),
+]
+
 def render_sidebar() -> str:
+    # Init page state
+    if "page" not in st.session_state:
+        st.session_state.page = "Overview"
+
     with st.sidebar:
         # ── Brand ──
         st.markdown("""
-        <div style="padding:0.6rem 0 0.75rem;border-bottom:1px solid #1C2E4A;margin-bottom:0.75rem;width:100%;box-sizing:border-box;">
-            <div style="font-family:'Inter Tight',sans-serif;font-size:1.55rem;font-weight:800;color:#DDE8F8;line-height:1.1;letter-spacing:-0.025em;">Swipe Atlas</div>
-            <div style="font-size:0.67rem;color:#3B82F6;margin-top:0.25rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">ML Engagement Dashboard</div>
+        <div style="width:100%;box-sizing:border-box;padding:1rem 0 0.9rem;border-bottom:1px solid #1C2E4A;margin-bottom:0.9rem;">
+            <div style="display:flex;align-items:center;gap:0.65rem;">
+                <div style="flex-shrink:0;width:34px;height:34px;background:#3B82F6;border-radius:9px;
+                            display:flex;align-items:center;justify-content:center;">
+                    <span style="font-family:'Inter Tight',sans-serif;font-size:1rem;font-weight:900;
+                                 color:#fff;line-height:1;letter-spacing:-0.03em;">S</span>
+                </div>
+                <div>
+                    <div style="font-family:'Inter Tight',sans-serif;font-size:1.45rem;font-weight:800;
+                                color:#DDE8F8;line-height:1;letter-spacing:-0.025em;">Swipe Atlas</div>
+                    <div style="font-size:0.62rem;color:#3B82F6;font-weight:700;text-transform:uppercase;
+                                letter-spacing:0.1em;margin-top:0.18rem;">ML Dashboard</div>
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Nav (no visible label — CSS hides widget label; empty string avoids "Navigate" showing) ──
-        section = st.radio(
-            "",
-            ["Overview", "Predict", "Evidence", "Segments"],
-            format_func=lambda x: {
-                "Overview": "▣   Overview",
-                "Predict":  "◎   Predict",
-                "Evidence": "≡   Evidence",
-                "Segments": "◉   Segments",
-            }[x],
-            label_visibility="collapsed",
-        )
+        # ── Nav section label ──
+        st.markdown("""
+        <p style="font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;
+                  color:#4A6180;margin:0 0 0.35rem 0.1rem;padding:0;">General</p>
+        """, unsafe_allow_html=True)
+
+        # ── Nav buttons — active = primary (blue tint), inactive = secondary (transparent) ──
+        for page, icon in _NAV_ITEMS:
+            is_active = st.session_state.page == page
+            if st.button(
+                f"{icon}   {page}",
+                key=f"nav_{page}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state.page = page
+                st.rerun()
+
+        st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
 
         # ── Key Finding ──
-        st.markdown('<p class="section-label" style="margin-top:1.1rem;">Key Finding</p>', unsafe_allow_html=True)
         st.markdown("""
-        <div style="width:100%;box-sizing:border-box;background:#0F1E35;border:1px solid #1C2E4A;border-left:3px solid #EF4444;border-radius:8px;padding:0.75rem 0.85rem;">
-            <div style="font-size:0.8rem;color:#FCA5A5;font-weight:700;margin-bottom:0.35rem;letter-spacing:0.01em;white-space:nowrap;">No Predictive Signal</div>
-            <div style="font-size:0.76rem;color:#7E99C0;line-height:1.65;word-break:break-word;overflow-wrap:break-word;">
-            0/23 tests survive correction<br>
-            All 10 models: CV R²≈0<br>
-            3/3 AutoML systems confirm<br>
-            Data is synthetic
+        <p style="font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;
+                  color:#4A6180;margin:0.6rem 0 0.35rem 0.1rem;padding:0;">Key Finding</p>
+        """, unsafe_allow_html=True)
+        st.markdown("""
+        <div style="width:100%;box-sizing:border-box;background:#0F1E35;border:1px solid #1C2E4A;
+                    border-left:3px solid #EF4444;border-radius:8px;padding:0.75rem 0.85rem;">
+            <div style="font-size:0.78rem;color:#FCA5A5;font-weight:700;margin-bottom:0.3rem;">No Predictive Signal</div>
+            <div style="font-size:0.74rem;color:#7E99C0;line-height:1.65;word-break:break-word;">
+                0/23 tests survive correction<br>
+                All 10 models: CV R²≈0<br>
+                3/3 AutoML confirm<br>
+                Data is synthetic
             </div>
         </div>
         """, unsafe_allow_html=True)
 
         # ── Leakage Rule ──
-        st.markdown('<p class="section-label" style="margin-top:1rem;">Leakage Rule</p>', unsafe_allow_html=True)
         st.markdown("""
-        <div style="width:100%;box-sizing:border-box;background:#0F1E35;border:1px solid #1C2E4A;border-left:3px solid #F59E0B;border-radius:8px;padding:0.75rem 0.85rem;">
-            <div style="font-size:0.76rem;color:#7E99C0;line-height:1.75;word-break:break-word;overflow-wrap:break-word;">
-            <code style="background:#152540;padding:1px 5px;border-radius:4px;color:#93C5FD;font-size:0.72rem;white-space:nowrap;">likes_received</code> excluded<br>
-            Without: R² = −0.001<br>
-            With: R² = <span style="color:#F59E0B;font-weight:700;">0.127</span>&nbsp;(leakage)
+        <p style="font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;
+                  color:#4A6180;margin:0.8rem 0 0.35rem 0.1rem;padding:0;">Leakage Rule</p>
+        """, unsafe_allow_html=True)
+        st.markdown("""
+        <div style="width:100%;box-sizing:border-box;background:#0F1E35;border:1px solid #1C2E4A;
+                    border-left:3px solid #F59E0B;border-radius:8px;padding:0.75rem 0.85rem;">
+            <div style="font-size:0.74rem;color:#7E99C0;line-height:1.75;word-break:break-word;">
+                <code style="background:#152540;padding:2px 6px;border-radius:4px;
+                             color:#93C5FD;font-size:0.7rem;">likes_received</code> excluded<br>
+                Without: R² = −0.001<br>
+                With:&nbsp; R² = <span style="color:#F59E0B;font-weight:700;">0.127</span>&nbsp;(leakage)
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Quick reference ──
-        st.markdown('<p class="section-label" style="margin-top:1rem;">Dataset</p>', unsafe_allow_html=True)
+        # ── Dataset quick stats ──
         st.markdown("""
-        <div style="width:100%;box-sizing:border-box;display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
-            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;box-sizing:border-box;">
-                <div style="font-size:0.65rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Rows</div>
-                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;">50,000</div>
+        <p style="font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;
+                  color:#4A6180;margin:0.8rem 0 0.35rem 0.1rem;padding:0;">Dataset</p>
+        <div style="width:100%;box-sizing:border-box;display:grid;grid-template-columns:1fr 1fr;gap:0.35rem;">
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:7px;padding:0.5rem 0.65rem;box-sizing:border-box;">
+                <div style="font-size:0.62rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Rows</div>
+                <div style="font-size:1.05rem;font-weight:700;color:#DDE8F8;line-height:1.2;">50,000</div>
             </div>
-            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;box-sizing:border-box;">
-                <div style="font-size:0.65rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Features</div>
-                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;">25</div>
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:7px;padding:0.5rem 0.65rem;box-sizing:border-box;">
+                <div style="font-size:0.62rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Features</div>
+                <div style="font-size:1.05rem;font-weight:700;color:#DDE8F8;line-height:1.2;">25</div>
             </div>
-            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;box-sizing:border-box;">
-                <div style="font-size:0.65rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Models Run</div>
-                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;">10</div>
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:7px;padding:0.5rem 0.65rem;box-sizing:border-box;">
+                <div style="font-size:0.62rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Models</div>
+                <div style="font-size:1.05rem;font-weight:700;color:#DDE8F8;line-height:1.2;">10</div>
             </div>
-            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;box-sizing:border-box;">
-                <div style="font-size:0.65rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Stat Tests</div>
-                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;">23</div>
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:7px;padding:0.5rem 0.65rem;box-sizing:border-box;">
+                <div style="font-size:0.62rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Stat Tests</div>
+                <div style="font-size:1.05rem;font-weight:700;color:#DDE8F8;line-height:1.2;">23</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-    return section
+    return st.session_state.page
 
 
 # ── SHAP Waterfall ────────────────────────────────────────────────────────────
@@ -761,13 +786,13 @@ def main() -> None:
 
     kpi_strip(df)
 
-    if "Overview" in section:
+    if section == "Overview":
         tab_overview(df)
-    elif "Predict" in section:
+    elif section == "Predict":
         tab_predict(df)
-    elif "Evidence" in section:
+    elif section == "Evidence":
         tab_evidence()
-    elif "Segments" in section:
+    elif section == "Segments":
         tab_segments(df)
 
 
