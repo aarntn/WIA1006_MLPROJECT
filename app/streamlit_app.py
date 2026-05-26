@@ -288,8 +288,30 @@ def apply_theme() -> None:
     .pred-result .pred-value { font-family: 'Inter Tight', sans-serif; font-size: 2.8rem; font-weight: 800; color: var(--txt); display: block; line-height: 1; }
     .pred-result .pred-note  { font-size: 0.8rem; color: var(--txt3); display: block; margin-top: 0.4rem; }
 
+    /* ── Page header ── */
+    .page-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.3rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .page-header-eyebrow {
+        font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.15em; color: var(--blue);
+        margin-bottom: 0.5rem; display: block;
+    }
+    .page-header-title {
+        font-size: 1.85rem; font-weight: 800;
+        color: var(--txt); letter-spacing: -0.03em;
+        line-height: 1; margin-bottom: 0.5rem; display: block;
+    }
+    .page-header-subtitle {
+        font-size: 0.9rem; color: var(--txt2);
+        line-height: 1.65; font-weight: 400; max-width: 640px; display: block;
+    }
+
     @media (max-width: 900px) {
         .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+        .page-header-title { font-size: 1.45rem; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -496,20 +518,50 @@ def show_shap_waterfall(model, sample_df: pd.DataFrame) -> None:
         st.caption(f"SHAP unavailable: {exc}")
 
 
+# ── Page headers ─────────────────────────────────────────────────────────────
+
+_PAGE_META: dict[str, tuple[str, str, str]] = {
+    "Overview": (
+        "Swipe Atlas · ML Project",
+        "Project Overview",
+        "What we set out to find, what every model told us, and why the result — "
+        "zero predictive signal — is the honest answer.",
+    ),
+    "Predict": (
+        "Engagement Prediction",
+        "Try the Predictor",
+        "Enter a user profile and get an estimated engagement score. "
+        "The model is trained but predicts near-chance — use this to explore inputs, not to draw conclusions.",
+    ),
+    "Evidence": (
+        "Model Evidence",
+        "What the Numbers Show",
+        "10 regression models, 3 AutoML frameworks, and 23 statistical tests — "
+        "all run on the same data, all arriving at the same answer.",
+    ),
+    "Segments": (
+        "User Segmentation",
+        "Behavioral Profiles",
+        "Explore how users cluster by behavior. "
+        "With a silhouette score of 0.019, these are loose descriptive profiles, not tight natural groups.",
+    ),
+}
+
+
+def page_header(section: str) -> None:
+    eyebrow, title, subtitle = _PAGE_META.get(section, ("", section, ""))
+    st.markdown(f"""
+    <div class="page-header">
+        <span class="page-header-eyebrow">{eyebrow}</span>
+        <span class="page-header-title">{title}</span>
+        <span class="page-header-subtitle">{subtitle}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 # ── Tabs ─────────────────────────────────────────────────────────────────────
 
 def tab_overview(df: pd.DataFrame) -> None:
-    st.markdown("### Project Summary")
-    st.markdown("""
-    <div style="background:#0C1526;border:1px solid #1C2E4A;border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem;">
-    <span style="color:#DDE8F8;font-size:0.92rem;line-height:1.7;">
-    <b style="color:#DDE8F8;">Swipe Atlas</b> tests whether dating-app profile and behaviour features can predict
-    engagement outcomes. After running 10 regression models, 3 AutoML systems, statistical correction across
-    23 tests, and unsupervised clustering — every method independently confirms
-    <b style="color:#FCA5A5;">R²≈0</b>. The dataset is synthetic, which explains the absence of signal.
-    </span>
-    </div>
-    """, unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
 
@@ -544,7 +596,6 @@ def tab_overview(df: pd.DataFrame) -> None:
 
 
 def tab_predict(df: pd.DataFrame) -> None:
-    st.markdown("### Engagement Prediction")
     st.warning("This model has R²≈0 on held-out data. Predictions are illustrative only — the model cannot reliably predict individual outcomes on this synthetic dataset.")
 
     model = load_model()
@@ -617,8 +668,6 @@ def tab_predict(df: pd.DataFrame) -> None:
 
 
 def tab_evidence() -> None:
-    st.markdown("### Model Evidence")
-
     results = load_csv(RESULTS_PATH)
     automl  = load_csv(AUTOML_PATH)
 
@@ -690,7 +739,6 @@ def tab_evidence() -> None:
 
 
 def tab_segments(df: pd.DataFrame) -> None:
-    st.markdown("### User Segmentation")
     st.info("Silhouette score = 0.019 (below the 0.25 'weak structure' threshold). Segments are descriptive profiles, not tight natural clusters.")
 
     summary     = load_csv(SEG_SUMMARY_PATH)
@@ -763,7 +811,7 @@ def main() -> None:
     df = load_data()
     section = render_sidebar()
 
-    # Compact breadcrumb — no duplicate "Swipe Atlas" title, saves vertical space
+    # Compact breadcrumb
     _section_labels = {
         "Overview": "Project Overview",
         "Predict":  "Engagement Prediction",
@@ -771,12 +819,14 @@ def main() -> None:
         "Segments": "User Segmentation",
     }
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.65rem;padding-bottom:0.55rem;border-bottom:1px solid #1C2E4A;">
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.2rem;padding-bottom:0.45rem;border-bottom:1px solid #1C2E4A;">
         <span style="font-size:0.7rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;">Swipe Atlas</span>
         <span style="color:#1C2E4A;font-size:0.85rem;line-height:1;">›</span>
         <span style="font-size:0.7rem;color:#7E99C0;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;">{_section_labels.get(section, section)}</span>
     </div>
     """, unsafe_allow_html=True)
+
+    page_header(section)
 
     kpi_strip(df)
 
