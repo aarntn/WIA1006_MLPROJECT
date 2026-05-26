@@ -90,6 +90,57 @@ def apply_theme() -> None:
     [data-testid="stSidebar"] > div { background: var(--surface) !important; }
     .block-container { padding-top: 1.5rem; padding-bottom: 3rem; max-width: 1200px; }
 
+    /* ── Sidebar collapse arrow (Material Icons must keep their font) ── */
+    [data-testid="stSidebarCollapseButton"] span,
+    [data-testid="stSidebarCollapsedControl"] span,
+    [data-testid="stSidebarCollapseButton"] button span,
+    [data-testid="stSidebarCollapsedControl"] button span {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+        font-size: 1.25rem !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button,
+    [data-testid="stSidebarCollapsedControl"] button {
+        background: transparent !important;
+        border: none !important;
+        color: var(--txt3) !important;
+    }
+
+    /* ── Sidebar radio → styled nav menu ── */
+    [data-testid="stSidebar"] [data-testid="stRadio"] > div {
+        gap: 2px !important;
+        flex-direction: column !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label {
+        display: flex !important;
+        align-items: center !important;
+        padding: 0.52rem 0.8rem !important;
+        border-radius: 7px !important;
+        cursor: pointer !important;
+        transition: background 0.15s, border-left-color 0.15s !important;
+        border-left: 3px solid transparent !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+        background: rgba(59,130,246,0.07) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+        background: rgba(59,130,246,0.13) !important;
+        border-left-color: #3B82F6 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label p {
+        color: var(--txt3) !important;
+        font-size: 0.88rem !important;
+        font-weight: 500 !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
+        color: #93C5FD !important;
+        font-weight: 650 !important;
+    }
+    [data-testid="stSidebar"] [data-baseweb="radio"] { display: none !important; }
+
     /* ── Typography ── */
     p, li, label, span, div { color: var(--txt2); }
     [data-testid="stMarkdownContainer"] p { color: var(--txt2); line-height: 1.6; }
@@ -285,39 +336,80 @@ def kpi_strip(df: pd.DataFrame) -> None:
 
 def render_sidebar() -> str:
     with st.sidebar:
+        # ── Brand ──
         st.markdown("""
-        <div style="padding: 0.5rem 0 1rem">
-            <div style="font-family:'Inter Tight',sans-serif; font-size:1.4rem; font-weight:800; color:#DDE8F8; line-height:1;">Swipe Atlas</div>
-            <div style="font-size:0.78rem; color:#4A6180; margin-top:0.25rem; font-weight:500;">ML Engagement Dashboard</div>
+        <div style="padding:0.6rem 0 1.1rem">
+            <div style="font-family:'Inter Tight',sans-serif;font-size:1.3rem;font-weight:800;color:#DDE8F8;line-height:1;letter-spacing:-0.01em;">Swipe Atlas</div>
+            <div style="font-size:0.74rem;color:#4A6180;margin-top:0.3rem;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;">ML Engagement Dashboard</div>
         </div>
         """, unsafe_allow_html=True)
 
+        # ── Nav ──
+        st.markdown('<span class="section-label">Navigation</span>', unsafe_allow_html=True)
         section = st.radio(
             "Navigate",
             ["Overview", "Predict", "Evidence", "Segments"],
+            format_func=lambda x: {
+                "Overview": "▣   Overview",
+                "Predict":  "◎   Predict",
+                "Evidence": "≡   Evidence",
+                "Segments": "◉   Segments",
+            }[x],
             label_visibility="collapsed",
         )
 
-        st.divider()
+        # ── Key Finding ──
+        st.markdown("<div style='margin-top:1.2rem;'>", unsafe_allow_html=True)
         st.markdown('<span class="section-label">Key Finding</span>', unsafe_allow_html=True)
         st.markdown("""
-        <div style="background:#0F1E35;border:1px solid #1C2E4A;border-left:3px solid #EF4444;border-radius:8px;padding:0.8rem 0.9rem;">
-            <div style="font-size:0.82rem;color:#FCA5A5;font-weight:600;margin-bottom:0.3rem;">No Predictive Signal</div>
-            <div style="font-size:0.78rem;color:#7E99C0;line-height:1.5;">
-            0/23 statistical tests survive correction.<br>
-            All models converge at R²≈0.<br>
-            Data is synthetic.
+        <div style="background:#0F1E35;border:1px solid #1C2E4A;border-left:3px solid #EF4444;border-radius:8px;padding:0.75rem 0.85rem;">
+            <div style="font-size:0.8rem;color:#FCA5A5;font-weight:700;margin-bottom:0.35rem;letter-spacing:0.01em;">No Predictive Signal</div>
+            <div style="font-size:0.76rem;color:#7E99C0;line-height:1.6;">
+            0/23 tests survive correction<br>
+            All 10 models: CV R²≈0<br>
+            3/3 AutoML systems confirm<br>
+            Data is synthetic
             </div>
+        </div>
         </div>
         """, unsafe_allow_html=True)
 
-        st.divider()
+        # ── Leakage Rule ──
+        st.markdown("<div style='margin-top:1rem;'>", unsafe_allow_html=True)
         st.markdown('<span class="section-label">Leakage Rule</span>', unsafe_allow_html=True)
         st.markdown("""
-        <div style="font-size:0.78rem;color:#7E99C0;line-height:1.6;">
-        <code style="background:#152540;padding:1px 5px;border-radius:4px;color:#93C5FD;">likes_received</code> excluded<br>
-        Including it inflates R² from<br>
-        −0.001 → <span style="color:#F59E0B;font-weight:600;">0.127</span> (leakage)
+        <div style="background:#0F1E35;border:1px solid #1C2E4A;border-left:3px solid #F59E0B;border-radius:8px;padding:0.75rem 0.85rem;">
+            <div style="font-size:0.76rem;color:#7E99C0;line-height:1.7;">
+            <code style="background:#152540;padding:1px 5px;border-radius:4px;color:#93C5FD;font-size:0.72rem;">likes_received</code> excluded<br>
+            Without: R² = −0.001<br>
+            With: R² = <span style="color:#F59E0B;font-weight:700;">0.127</span> &nbsp;(leakage)
+            </div>
+        </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Quick reference ──
+        st.markdown("<div style='margin-top:1rem;'>", unsafe_allow_html=True)
+        st.markdown('<span class="section-label">Dataset</span>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;">
+                <div style="font-size:0.68rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Rows</div>
+                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;font-family:'Inter Tight',sans-serif;">50,000</div>
+            </div>
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;">
+                <div style="font-size:0.68rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Features</div>
+                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;font-family:'Inter Tight',sans-serif;">25</div>
+            </div>
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;">
+                <div style="font-size:0.68rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Models Run</div>
+                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;font-family:'Inter Tight',sans-serif;">10</div>
+            </div>
+            <div style="background:#101E34;border:1px solid #1C2E4A;border-radius:6px;padding:0.5rem 0.6rem;">
+                <div style="font-size:0.68rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">Stat Tests</div>
+                <div style="font-size:1rem;font-weight:700;color:#DDE8F8;font-family:'Inter Tight',sans-serif;">23</div>
+            </div>
+        </div>
         </div>
         """, unsafe_allow_html=True)
 
