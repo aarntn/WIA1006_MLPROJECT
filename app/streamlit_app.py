@@ -115,7 +115,11 @@ def apply_theme() -> None:
     [data-testid="stSidebar"] { background: var(--surface) !important; border-right: 1px solid var(--border) !important; }
     [data-testid="stSidebar"] > div { background: var(--surface) !important; overflow-y: auto !important; overflow-x: hidden !important; }
     /* ── Kill every layer of Streamlit's sidebar top padding ── */
-    [data-testid="stSidebarContent"]                             { padding-top: 0.6rem !important; }
+    [data-testid="stSidebarContent"]                             { padding-top: 0 !important; }
+    [data-testid="stSidebarHeader"]                              { height: 0 !important; min-height: 0 !important; padding: 0 !important; }
+    [data-testid="stLogoSpacer"]                                 { display: none !important; }
+    [data-testid="stSidebarCollapseButton"]                      { position: absolute !important; top: 0.45rem !important; right: 0.55rem !important; z-index: 5 !important; }
+    [data-testid="stSidebarUserContent"]                         { padding-top: 0 !important; }
     [data-testid="stSidebar"] > div > div:first-child            { padding-top: 0 !important; margin-top: 0 !important; }
     [data-testid="stSidebar"] > div > div:first-child > div      { padding-top: 0 !important; margin-top: 0 !important; }
     [data-testid="stSidebar"] section                            { padding-top: 0 !important; margin-top: 0 !important; }
@@ -152,10 +156,44 @@ def apply_theme() -> None:
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
     }
     [data-testid="stSidebarCollapseButton"] button,
+    [data-testid="stExpandSidebarButton"],
     [data-testid="stSidebarCollapsedControl"] button,
     [data-testid="collapsedControl"] button,
     [data-testid*="Collapse"] button {
         background: transparent !important; border: none !important; color: var(--txt3) !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button > span,
+    [data-testid="stExpandSidebarButton"] > span,
+    [data-testid="stSidebarCollapsedControl"] button > span,
+    [data-testid="collapsedControl"] button > span,
+    [data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"],
+    [data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"],
+    [data-testid="stSidebarCollapsedControl"] [data-testid="stIconMaterial"],
+    [data-testid="collapsedControl"] [data-testid="stIconMaterial"] {
+        display: none !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button::before,
+    [data-testid="stExpandSidebarButton"]::before,
+    [data-testid="stSidebarCollapsedControl"] button::before,
+    [data-testid="collapsedControl"] button::before {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+        color: var(--txt3) !important;
+        font-family: 'Inter Tight', sans-serif !important;
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button::before {
+        content: '‹';
+    }
+    [data-testid="stExpandSidebarButton"]::before,
+    [data-testid="stSidebarCollapsedControl"] button::before,
+    [data-testid="collapsedControl"] button::before {
+        content: '›';
     }
 
     /* ── Sidebar markdown containers — always stretch full width ── */
@@ -284,11 +322,20 @@ def apply_theme() -> None:
     }
     [data-testid="stExpander"] summary::-webkit-details-marker,
     [data-testid="stExpander"] summary::marker { display: none !important; }
-    /* Hide Streamlit's icon span — we replace it with ::after */
+    /* Hide Streamlit's icon span/wrapper - we replace it with ::after */
+    [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"],
+    [data-testid="stExpander"] summary [data-testid="stIconMaterial"],
     [data-testid="stExpander"] summary .material-symbols-rounded,
     [data-testid="stExpander"] summary .material-symbols-outlined,
     [data-testid="stExpander"] summary [class*="material-symbols"] {
         display: none !important;
+    }
+    [data-testid="stExpander"] summary [data-testid="stIconMaterial"] {
+        width: 0 !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
     }
     /* Our chevron — Inter Tight, always renders, no font dependency */
     [data-testid="stExpander"] summary::after {
@@ -498,7 +545,7 @@ def render_sidebar() -> str:
         # ── Brand — flush to top, no gap above ──
         st.markdown("""
         <div style="width:100%;box-sizing:border-box;
-                    padding:0.4rem 0.1rem 0.85rem;
+                    padding:0.75rem 2.3rem 0.85rem 0.1rem;
                     border-bottom:1px solid #1C2E4A;margin-bottom:1rem;">
             <div style="display:flex;align-items:center;gap:0.7rem;">
                 <div style="flex-shrink:0;width:32px;height:32px;background:#3B82F6;border-radius:8px;
