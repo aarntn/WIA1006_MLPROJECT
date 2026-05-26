@@ -540,7 +540,7 @@ def tab_overview(df: pd.DataFrame) -> None:
         for i, (fname, caption) in enumerate(figs):
             path = FIGDIR / fname
             if path.exists():
-                fig_cols[i % 2].image(str(path), caption=caption, use_container_width=True)
+                fig_cols[i % 2].image(str(path), caption=caption, width="stretch")
 
 
 def tab_predict(df: pd.DataFrame) -> None:
@@ -641,16 +641,16 @@ def tab_evidence() -> None:
         st.markdown('<span class="section-label">Model Comparison — Safe Feature Set</span>', unsafe_allow_html=True)
         fig_path = FIGDIR / "12_engagement_model_comparison.png"
         if fig_path.exists():
-            st.image(str(fig_path), use_container_width=True)
+            st.image(str(fig_path), width="stretch")
         elif results is not None:
             safe_disp = results[results["setting"] == "official safe"].sort_values("cv_r2_mean", ascending=False)
-            st.dataframe(safe_disp[["model", "cv_r2_mean", "cv_mae_mean"]].round(4), use_container_width=True)
+            st.dataframe(safe_disp[["model", "cv_r2_mean", "cv_mae_mean"]].round(4), width="stretch")
 
     with col2:
         st.markdown('<span class="section-label">Leakage Demonstration</span>', unsafe_allow_html=True)
         fig_path = FIGDIR / "13_leakage_comparison.png"
         if fig_path.exists():
-            st.image(str(fig_path), use_container_width=True)
+            st.image(str(fig_path), width="stretch")
         else:
             st.caption("Run script 04 to generate this figure.")
 
@@ -662,31 +662,31 @@ def tab_evidence() -> None:
         st.markdown('<span class="section-label">Signal Test — match_outcome</span>', unsafe_allow_html=True)
         fig_path = FIGDIR / "10_signal_summary.png"
         if fig_path.exists():
-            st.image(str(fig_path), use_container_width=True)
+            st.image(str(fig_path), width="stretch")
 
     with col4:
         st.markdown('<span class="section-label">AutoML Comparison</span>', unsafe_allow_html=True)
         fig_path = FIGDIR / "20_automl_comparison.png"
         if fig_path.exists():
-            st.image(str(fig_path), use_container_width=True)
+            st.image(str(fig_path), width="stretch")
         elif automl is not None:
-            st.dataframe(automl[["model", "backend", "r2", "mae"]].round(4), use_container_width=True)
+            st.dataframe(automl[["model", "backend", "r2", "mae"]].round(4), width="stretch")
 
     st.divider()
     st.markdown('<span class="section-label">Learning Curve</span>', unsafe_allow_html=True)
     fig_path = FIGDIR / "14b_learning_curve.png"
     if fig_path.exists():
-        st.image(str(fig_path), use_container_width=True)
+        st.image(str(fig_path), width="stretch")
         st.caption("R² stays flat as training size increases — more data cannot fix zero signal.")
 
     with st.expander("Full model results table"):
         if results is not None:
             safe = results[results["setting"] == "official safe"].sort_values("cv_r2_mean", ascending=False)
-            st.dataframe(safe[["model","cv_r2_mean","cv_r2_std","cv_mae_mean","cv_rmse_mean"]].round(4), use_container_width=True)
+            st.dataframe(safe[["model","cv_r2_mean","cv_r2_std","cv_mae_mean","cv_rmse_mean"]].round(4), width="stretch")
 
     with st.expander("AutoML detailed results"):
         if automl is not None:
-            st.dataframe(automl[["model","backend","status","r2","mae","rmse"]].round(4), use_container_width=True)
+            st.dataframe(automl[["model","backend","status","r2","mae","rmse"]].round(4), width="stretch")
 
 
 def tab_segments(df: pd.DataFrame) -> None:
@@ -714,14 +714,14 @@ def tab_segments(df: pd.DataFrame) -> None:
         st.markdown('<span class="section-label">UMAP Projection</span>', unsafe_allow_html=True)
         umap_path = FIGDIR / "16_segment_umap.png"
         if umap_path.exists():
-            st.image(str(umap_path), use_container_width=True)
+            st.image(str(umap_path), width="stretch")
             st.caption("Diffuse, overlapping clusters confirm weak structure.")
 
     with col2:
         st.markdown('<span class="section-label">Segment Profiles</span>', unsafe_allow_html=True)
         profile_path = FIGDIR / "17_segment_profiles.png"
         if profile_path.exists():
-            st.image(str(profile_path), use_container_width=True)
+            st.image(str(profile_path), width="stretch")
 
     st.divider()
 
@@ -731,13 +731,13 @@ def tab_segments(df: pd.DataFrame) -> None:
         st.markdown('<span class="section-label">K Selection — Silhouette Sweep</span>', unsafe_allow_html=True)
         k_path = FIGDIR / "15_kmeans_selection.png"
         if k_path.exists():
-            st.image(str(k_path), use_container_width=True)
+            st.image(str(k_path), width="stretch")
 
     with col4:
         st.markdown('<span class="section-label">GMM BIC / AIC</span>', unsafe_allow_html=True)
         gmm_path = FIGDIR / "18_gmm_bic_aic.png"
         if gmm_path.exists():
-            st.image(str(gmm_path), use_container_width=True)
+            st.image(str(gmm_path), width="stretch")
             st.caption("Monotone BIC/AIC decrease — no preferred cluster count.")
 
     if summary is not None:
@@ -746,7 +746,7 @@ def tab_segments(df: pd.DataFrame) -> None:
         disp = summary.copy()
         if "segment_id" in disp.columns:
             disp = disp.drop(columns=["segment_id"])
-        st.dataframe(disp.round(2), use_container_width=True)
+        st.dataframe(disp.round(2), width="stretch")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
