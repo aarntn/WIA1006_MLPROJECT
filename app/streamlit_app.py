@@ -85,6 +85,31 @@ def apply_theme() -> None:
     h1,h2,h3,h4,h5 { font-family: 'Inter Tight', sans-serif !important; color: var(--txt); }
     code, pre, .mono { font-family: 'JetBrains Mono', monospace !important; }
 
+    /* ── Material Symbols: global icon font preservation ──────────────────────
+       Streamlit assigns .material-symbols-rounded to EVERY icon span it renders
+       (expander chevrons, sidebar arrows, button icons, tabs, etc).
+       Our * rule wins by !important — so we must win back here with higher
+       specificity AND !important to beat the cascade.
+    ──────────────────────────────────────────────────────────────────────────── */
+    .material-symbols-rounded,
+    .material-symbols-outlined,
+    .material-icons,
+    .material-icons-outlined,
+    [class*="material-symbols"],
+    [class*="material-icons"] {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+        font-style: normal !important;
+        font-weight: normal !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        white-space: nowrap !important;
+        direction: ltr !important;
+        -webkit-font-smoothing: antialiased !important;
+        -webkit-font-feature-settings: 'liga' 1 !important;
+        font-feature-settings: 'liga' 1 !important;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+    }
+
     /* ── Streamlit chrome ── */
     [data-testid="stHeader"] { background: var(--bg) !important; border-bottom: 1px solid var(--border); }
     [data-testid="stSidebar"] { background: var(--surface) !important; border-right: 1px solid var(--border) !important; }
@@ -98,11 +123,12 @@ def apply_theme() -> None:
     [data-testid="stSidebar"] section > div > div:first-child    { padding-top: 0 !important; margin-top: 0 !important; }
     .block-container { padding-top: 0.75rem; padding-bottom: 3rem; max-width: 1200px; }
 
-    /* ── Sidebar collapse / expand arrows — preserve Material Symbols font ──
-       Cover every test-id Streamlit has used across versions:
-       stSidebarCollapseButton  = arrow when sidebar is OPEN
-       stSidebarCollapsedControl / collapsedControl = arrow when sidebar is CLOSED
-    ── */
+    /* ── Sidebar collapse / expand arrows ─────────────────────────────────────
+       Belt-and-suspenders: explicit test-ids + wildcard substring match.
+       The icon spans here have NO class in most Streamlit versions, so the
+       global .material-symbols-rounded rule above doesn't reach them.
+       We need data-testid targeting specifically.
+    ──────────────────────────────────────────────────────────────────────────── */
     [data-testid="stSidebarCollapseButton"] span,
     [data-testid="stSidebarCollapseButton"] p,
     [data-testid="stSidebarCollapseButton"] div,
@@ -111,19 +137,24 @@ def apply_theme() -> None:
     [data-testid="stSidebarCollapsedControl"] div,
     [data-testid="collapsedControl"] span,
     [data-testid="collapsedControl"] p,
-    [data-testid="collapsedControl"] div {
-        font-family: 'Material Symbols Rounded' !important;
+    [data-testid="collapsedControl"] div,
+    [data-testid*="Collapse"] span,
+    [data-testid*="Collapse"] p,
+    [data-testid*="collapsed"] span,
+    [data-testid*="collapsed"] p {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
         font-style: normal !important;
         font-size: 1.25rem !important;
         letter-spacing: normal !important;
         text-transform: none !important;
-        -webkit-font-feature-settings: 'liga' 1;
-        font-feature-settings: 'liga' 1;
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        -webkit-font-feature-settings: 'liga' 1 !important;
+        font-feature-settings: 'liga' 1 !important;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
     }
     [data-testid="stSidebarCollapseButton"] button,
     [data-testid="stSidebarCollapsedControl"] button,
-    [data-testid="collapsedControl"] button {
+    [data-testid="collapsedControl"] button,
+    [data-testid*="Collapse"] button {
         background: transparent !important; border: none !important; color: var(--txt3) !important;
     }
 
@@ -223,12 +254,68 @@ def apply_theme() -> None:
     }
     [data-testid="stTabs"] button[role="tab"]:hover { color: var(--txt) !important; }
 
-    /* ── Containers / expanders ── */
+    /* ── Expanders ─────────────────────────────────────────────────────────────
+       Design-intentional: CSS ::after chevron so we're never dependent on
+       Material Symbols loading. Any broken icon span inside summary is hidden;
+       the ::after ›  rotates on open — clean, precise, always renders.
+    ──────────────────────────────────────────────────────────────────────────── */
     [data-testid="stExpander"] {
-        background: var(--card) !important; border: 1px solid var(--border) !important;
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
         border-radius: 10px !important;
+        overflow: hidden !important;
+        transition: border-color 0.15s ease !important;
     }
-    [data-testid="stExpander"] summary { color: var(--txt2) !important; font-weight: 600 !important; }
+    [data-testid="stExpander"]:hover {
+        border-color: var(--border2) !important;
+    }
+    /* Summary row */
+    [data-testid="stExpander"] summary {
+        list-style: none !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 0.85rem 1.1rem !important;
+        color: var(--txt2) !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        user-select: none !important;
+        position: relative !important;
+    }
+    [data-testid="stExpander"] summary::-webkit-details-marker,
+    [data-testid="stExpander"] summary::marker { display: none !important; }
+    /* Hide Streamlit's icon span — we replace it with ::after */
+    [data-testid="stExpander"] summary .material-symbols-rounded,
+    [data-testid="stExpander"] summary .material-symbols-outlined,
+    [data-testid="stExpander"] summary [class*="material-symbols"] {
+        display: none !important;
+    }
+    /* Our chevron — Inter Tight, always renders, no font dependency */
+    [data-testid="stExpander"] summary::after {
+        content: '›';
+        font-family: 'Inter Tight', sans-serif !important;
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+        color: var(--txt3);
+        margin-left: auto;
+        padding-left: 0.75rem;
+        transition: transform 0.18s ease, color 0.15s ease;
+        display: inline-block;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+    [data-testid="stExpander"][open] > summary::after {
+        transform: rotate(90deg);
+        color: var(--txt2);
+    }
+    [data-testid="stExpander"] summary:hover { color: var(--txt) !important; }
+    [data-testid="stExpander"] summary:hover::after { color: var(--txt2); }
+    /* Content padding */
+    [data-testid="stExpander"] > div[data-testid] {
+        padding: 0 1.1rem 1rem !important;
+    }
+
+    /* ── Other containers ── */
     [data-testid="stContainer"] [data-testid="stVerticalBlockBorderWrapper"] {
         background: var(--card) !important; border: 1px solid var(--border) !important; border-radius: 10px !important;
     }
