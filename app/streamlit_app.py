@@ -60,6 +60,7 @@ def apply_theme() -> None:
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 
     :root {
         --bg:       #070E1A;
@@ -97,16 +98,32 @@ def apply_theme() -> None:
     [data-testid="stSidebar"] section > div > div:first-child    { padding-top: 0 !important; margin-top: 0 !important; }
     .block-container { padding-top: 0.75rem; padding-bottom: 3rem; max-width: 1200px; }
 
-    /* ── Sidebar collapse arrow — preserve Material Icons font ── */
+    /* ── Sidebar collapse / expand arrows — preserve Material Symbols font ──
+       Cover every test-id Streamlit has used across versions:
+       stSidebarCollapseButton  = arrow when sidebar is OPEN
+       stSidebarCollapsedControl / collapsedControl = arrow when sidebar is CLOSED
+    ── */
     [data-testid="stSidebarCollapseButton"] span,
+    [data-testid="stSidebarCollapseButton"] p,
+    [data-testid="stSidebarCollapseButton"] div,
     [data-testid="stSidebarCollapsedControl"] span,
-    [data-testid="stSidebarCollapseButton"] button span,
-    [data-testid="stSidebarCollapsedControl"] button span {
-        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
-        font-size: 1.2rem !important;
+    [data-testid="stSidebarCollapsedControl"] p,
+    [data-testid="stSidebarCollapsedControl"] div,
+    [data-testid="collapsedControl"] span,
+    [data-testid="collapsedControl"] p,
+    [data-testid="collapsedControl"] div {
+        font-family: 'Material Symbols Rounded' !important;
+        font-style: normal !important;
+        font-size: 1.25rem !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        -webkit-font-feature-settings: 'liga' 1;
+        font-feature-settings: 'liga' 1;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
     [data-testid="stSidebarCollapseButton"] button,
-    [data-testid="stSidebarCollapsedControl"] button {
+    [data-testid="stSidebarCollapsedControl"] button,
+    [data-testid="collapsedControl"] button {
         background: transparent !important; border: none !important; color: var(--txt3) !important;
     }
 
