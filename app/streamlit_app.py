@@ -88,14 +88,13 @@ def apply_theme() -> None:
     [data-testid="stHeader"] { background: var(--bg) !important; border-bottom: 1px solid var(--border); }
     [data-testid="stSidebar"] { background: var(--surface) !important; border-right: 1px solid var(--border) !important; }
     [data-testid="stSidebar"] > div { background: var(--surface) !important; overflow-y: auto !important; overflow-x: hidden !important; }
-    /* Zero all default Streamlit sidebar padding so brand sits flush at top */
-    [data-testid="stSidebar"] > div > div:first-child,
-    [data-testid="stSidebar"] > div > div:first-child > div:first-child {
-        padding-top: 0 !important; margin-top: 0 !important;
-    }
-    [data-testid="stSidebar"] section > div {
-        padding-top: 0 !important; padding-bottom: 0.5rem !important;
-    }
+    /* ── Kill every layer of Streamlit's sidebar top padding ── */
+    [data-testid="stSidebarContent"]                             { padding-top: 0.6rem !important; }
+    [data-testid="stSidebar"] > div > div:first-child            { padding-top: 0 !important; margin-top: 0 !important; }
+    [data-testid="stSidebar"] > div > div:first-child > div      { padding-top: 0 !important; margin-top: 0 !important; }
+    [data-testid="stSidebar"] section                            { padding-top: 0 !important; margin-top: 0 !important; }
+    [data-testid="stSidebar"] section > div                      { padding-top: 0 !important; padding-bottom: 0.5rem !important; }
+    [data-testid="stSidebar"] section > div > div:first-child    { padding-top: 0 !important; margin-top: 0 !important; }
     .block-container { padding-top: 0.75rem; padding-bottom: 3rem; max-width: 1200px; }
 
     /* ── Sidebar collapse arrow — preserve Material Icons font ── */
@@ -380,7 +379,7 @@ def render_sidebar() -> str:
         # ── Brand — flush to top, no gap above ──
         st.markdown("""
         <div style="width:100%;box-sizing:border-box;
-                    padding:1.1rem 0.1rem 0.9rem;
+                    padding:0.4rem 0.1rem 0.85rem;
                     border-bottom:1px solid #1C2E4A;margin-bottom:1rem;">
             <div style="display:flex;align-items:center;gap:0.7rem;">
                 <div style="flex-shrink:0;width:32px;height:32px;background:#3B82F6;border-radius:8px;
