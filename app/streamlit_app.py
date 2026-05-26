@@ -88,8 +88,9 @@ def apply_theme() -> None:
     [data-testid="stHeader"] { background: var(--bg) !important; border-bottom: 1px solid var(--border); }
     [data-testid="stSidebar"] { background: var(--surface) !important; border-right: 1px solid var(--border) !important; }
     [data-testid="stSidebar"] > div { background: var(--surface) !important; overflow-y: auto !important; overflow-x: hidden !important; }
-    /* Sidebar inner section padding reset */
-    [data-testid="stSidebar"] section > div { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; }
+    /* Kill all default top padding so brand sits at the very top */
+    [data-testid="stSidebar"] > div > div:first-child { padding-top: 0 !important; margin-top: 0 !important; }
+    [data-testid="stSidebar"] section > div { padding-top: 0.3rem !important; padding-bottom: 0.5rem !important; }
     .block-container { padding-top: 0.75rem; padding-bottom: 3rem; max-width: 1200px; }
 
     /* ── Sidebar collapse arrow (Material Icons must keep their font) ── */
@@ -123,7 +124,7 @@ def apply_theme() -> None:
         overflow-wrap: break-word !important;
     }
 
-    /* ── Sidebar nav: button-based — width 100% is native, no CSS hacks needed ── */
+    /* ── Sidebar nav: button-based — looks like rows, not buttons ── */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"],
     [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
         margin: 1px 0 !important;
@@ -134,37 +135,37 @@ def apply_theme() -> None:
         width: 100% !important;
         text-align: left !important;
         justify-content: flex-start !important;
-        border-radius: 8px !important;
-        padding: 0.55rem 0.9rem !important;
+        border-radius: 6px !important;
+        padding: 0.52rem 0.85rem !important;
         font-size: 0.875rem !important;
         font-weight: 500 !important;
         border: none !important;
-        border-left: 3px solid transparent !important;
-        transition: background 0.15s, border-left-color 0.15s, color 0.15s !important;
+        border-left: 2px solid transparent !important;
+        transition: background 0.12s ease, color 0.12s ease, border-left-color 0.12s ease !important;
         line-height: 1 !important;
         letter-spacing: 0.01em !important;
         box-shadow: none !important;
     }
-    /* Inactive nav item */
+    /* Inactive — invisible until hovered: plain row, no chrome */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button {
         background: transparent !important;
         color: var(--txt3) !important;
     }
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button:hover {
-        background: rgba(59,130,246,0.07) !important;
-        color: var(--txt2) !important;
-        border-left-color: rgba(59,130,246,0.35) !important;
+        background: rgba(255,255,255,0.045) !important;
+        color: var(--txt) !important;
+        border-left-color: rgba(59,130,246,0.5) !important;
     }
-    /* Active nav item */
+    /* Active — barely-there tint + left accent, white readable text */
     [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
-        background: rgba(59,130,246,0.15) !important;
-        color: #93C5FD !important;
+        background: rgba(255,255,255,0.06) !important;
+        color: var(--txt) !important;
         font-weight: 700 !important;
         border-left-color: #3B82F6 !important;
         box-shadow: none !important;
     }
     [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button:hover {
-        background: rgba(59,130,246,0.22) !important;
+        background: rgba(255,255,255,0.09) !important;
     }
 
     /* ── Typography ── */
@@ -375,7 +376,7 @@ def render_sidebar() -> str:
     with st.sidebar:
         # ── Brand ──
         st.markdown("""
-        <div style="width:100%;box-sizing:border-box;padding:1rem 0 0.9rem;border-bottom:1px solid #1C2E4A;margin-bottom:0.9rem;">
+        <div style="width:100%;box-sizing:border-box;padding:0.3rem 0 0.85rem;border-bottom:1px solid #1C2E4A;margin-bottom:0.85rem;">
             <div style="display:flex;align-items:center;gap:0.65rem;">
                 <div style="flex-shrink:0;width:34px;height:34px;background:#3B82F6;border-radius:9px;
                             display:flex;align-items:center;justify-content:center;">
