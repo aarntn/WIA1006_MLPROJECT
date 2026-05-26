@@ -59,7 +59,7 @@ def fmt(v, d=3):
 def apply_theme() -> None:
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
     :root {
         --bg:       #070E1A;
@@ -80,8 +80,8 @@ def apply_theme() -> None:
 
     /* ── Base ── */
     html, body, .stApp { background: var(--bg) !important; }
-    * { font-family: 'DM Sans', sans-serif !important; box-sizing: border-box; }
-    h1,h2,h3,h4,h5 { font-family: 'Outfit', sans-serif !important; color: var(--txt); }
+    * { font-family: 'Inter Tight', sans-serif !important; box-sizing: border-box; }
+    h1,h2,h3,h4,h5 { font-family: 'Inter Tight', sans-serif !important; color: var(--txt); }
     code, pre, .mono { font-family: 'JetBrains Mono', monospace !important; }
 
     /* ── Streamlit chrome ── */
@@ -99,7 +99,7 @@ def apply_theme() -> None:
 
     /* ── Metrics ── */
     [data-testid="stMetricLabel"]  { color: var(--txt3) !important; font-size: 0.78rem !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: 0.06em; }
-    [data-testid="stMetricValue"]  { color: var(--txt) !important; font-family: 'Outfit', sans-serif !important; font-size: 1.9rem !important; font-weight: 700 !important; }
+    [data-testid="stMetricValue"]  { color: var(--txt) !important; font-family: 'Inter Tight', sans-serif !important; font-size: 1.9rem !important; font-weight: 700 !important; }
     [data-testid="stMetricDelta"]  { font-size: 0.82rem !important; }
     [data-testid="stMetric"]       { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
 
@@ -176,7 +176,7 @@ def apply_theme() -> None:
         color: var(--txt3); margin-bottom: 0.3rem; display: block;
     }
     .kpi-card .kpi-value {
-        font-family: 'Outfit', sans-serif;
+        font-family: 'Inter Tight', sans-serif;
         font-size: 1.5rem; font-weight: 700;
         color: var(--txt); line-height: 1;
         display: block; margin-bottom: 0.2rem;
@@ -214,7 +214,7 @@ def apply_theme() -> None:
         margin: 1rem 0;
     }
     .pred-result .pred-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--txt3); display: block; margin-bottom: 0.3rem; }
-    .pred-result .pred-value { font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800; color: var(--txt); display: block; line-height: 1; }
+    .pred-result .pred-value { font-family: 'Inter Tight', sans-serif; font-size: 2.8rem; font-weight: 800; color: var(--txt); display: block; line-height: 1; }
     .pred-result .pred-note  { font-size: 0.8rem; color: var(--txt3); display: block; margin-top: 0.4rem; }
 
     @media (max-width: 900px) {
@@ -287,14 +287,14 @@ def render_sidebar() -> str:
     with st.sidebar:
         st.markdown("""
         <div style="padding: 0.5rem 0 1rem">
-            <div style="font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:800; color:#DDE8F8; line-height:1;">Swipe Atlas</div>
+            <div style="font-family:'Inter Tight',sans-serif; font-size:1.4rem; font-weight:800; color:#DDE8F8; line-height:1;">Swipe Atlas</div>
             <div style="font-size:0.78rem; color:#4A6180; margin-top:0.25rem; font-weight:500;">ML Engagement Dashboard</div>
         </div>
         """, unsafe_allow_html=True)
 
         section = st.radio(
             "Navigate",
-            ["📊  Overview", "🎯  Predict", "🔬  Evidence", "👥  Segments"],
+            ["Overview", "Predict", "Evidence", "Segments"],
             label_visibility="collapsed",
         )
 
@@ -382,7 +382,7 @@ def tab_overview(df: pd.DataFrame) -> None:
             "Data is synthetic — perfect balance, uniform tag frequencies",
         ]
         for f in findings:
-            st.markdown(f'<span class="finding-badge">✗ {f}</span>', unsafe_allow_html=True)
+            st.markdown(f'<span class="finding-badge">{f}</span>', unsafe_allow_html=True)
 
     with col2:
         st.markdown('<span class="section-label">Figure Gallery</span>', unsafe_allow_html=True)
@@ -401,7 +401,7 @@ def tab_overview(df: pd.DataFrame) -> None:
 
 def tab_predict(df: pd.DataFrame) -> None:
     st.markdown("### Engagement Prediction")
-    st.warning("⚠️ This model has R²≈0 on held-out data. Predictions are illustrative only — the model cannot reliably predict individual outcomes on this synthetic dataset.")
+    st.warning("This model has R²≈0 on held-out data. Predictions are illustrative only — the model cannot reliably predict individual outcomes on this synthetic dataset.")
 
     model = load_model()
     if model is None:
@@ -610,7 +610,7 @@ def tab_segments(df: pd.DataFrame) -> None:
 def main() -> None:
     st.set_page_config(
         page_title="Swipe Atlas",
-        page_icon="📊",
+        page_icon=None,
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -622,7 +622,7 @@ def main() -> None:
     # Page header
     st.markdown("""
     <div style="display:flex;align-items:baseline;gap:0.8rem;margin-bottom:0.5rem;">
-        <span style="font-family:'Outfit',sans-serif;font-size:1.9rem;font-weight:800;color:#DDE8F8;">Swipe Atlas</span>
+        <span style="font-family:'Inter Tight',sans-serif;font-size:1.9rem;font-weight:800;color:#DDE8F8;">Swipe Atlas</span>
         <span style="font-size:0.82rem;color:#4A6180;font-weight:500;">Engagement Prediction · User Segmentation · Model Evidence</span>
     </div>
     """, unsafe_allow_html=True)
