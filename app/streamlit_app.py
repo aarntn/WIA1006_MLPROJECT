@@ -87,8 +87,10 @@ def apply_theme() -> None:
     /* ── Streamlit chrome ── */
     [data-testid="stHeader"] { background: var(--bg) !important; border-bottom: 1px solid var(--border); }
     [data-testid="stSidebar"] { background: var(--surface) !important; border-right: 1px solid var(--border) !important; }
-    [data-testid="stSidebar"] > div { background: var(--surface) !important; }
-    .block-container { padding-top: 1.5rem; padding-bottom: 3rem; max-width: 1200px; }
+    [data-testid="stSidebar"] > div { background: var(--surface) !important; overflow-y: auto !important; overflow-x: hidden !important; }
+    /* Sidebar inner section padding reset */
+    [data-testid="stSidebar"] section > div { padding-top: 0.6rem !important; padding-bottom: 0.6rem !important; }
+    .block-container { padding-top: 0.75rem; padding-bottom: 3rem; max-width: 1200px; }
 
     /* ── Sidebar collapse arrow (Material Icons must keep their font) ── */
     [data-testid="stSidebarCollapseButton"] span,
@@ -110,16 +112,22 @@ def apply_theme() -> None:
         gap: 2px !important;
         flex-direction: column !important;
     }
+    /* Hide the radio widget label row entirely */
+    [data-testid="stSidebar"] [data-testid="stRadio"] [data-testid="stWidgetLabel"],
+    [data-testid="stSidebar"] [data-testid="stRadio"] > label {
+        display: none !important;
+    }
     [data-testid="stSidebar"] [data-testid="stRadio"] label {
         display: flex !important;
         align-items: center !important;
-        padding: 0.52rem 0.8rem !important;
+        padding: 0.5rem 0.75rem !important;
         border-radius: 7px !important;
         cursor: pointer !important;
         transition: background 0.15s, border-left-color 0.15s !important;
         border-left: 3px solid transparent !important;
         margin: 0 !important;
         width: 100% !important;
+        gap: 0 !important;
     }
     [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
         background: rgba(59,130,246,0.07) !important;
@@ -137,9 +145,15 @@ def apply_theme() -> None:
     }
     [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
         color: #93C5FD !important;
-        font-weight: 650 !important;
+        font-weight: 700 !important;
     }
-    [data-testid="stSidebar"] [data-baseweb="radio"] { display: none !important; }
+    /* Hide ALL radio circle indicators — multiple selector layers for Streamlit versions */
+    [data-testid="stSidebar"] [data-baseweb="radio"],
+    [data-testid="stSidebar"] [data-testid="stRadio"] [role="radio"],
+    [data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child,
+    [data-testid="stSidebar"] [data-testid="stRadio"] input[type="radio"] {
+        display: none !important;
+    }
 
     /* ── Typography ── */
     p, li, label, span, div { color: var(--txt2); }
@@ -338,16 +352,15 @@ def render_sidebar() -> str:
     with st.sidebar:
         # ── Brand ──
         st.markdown("""
-        <div style="padding:0.6rem 0 1.1rem">
-            <div style="font-family:'Inter Tight',sans-serif;font-size:1.3rem;font-weight:800;color:#DDE8F8;line-height:1;letter-spacing:-0.01em;">Swipe Atlas</div>
-            <div style="font-size:0.74rem;color:#4A6180;margin-top:0.3rem;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;">ML Engagement Dashboard</div>
+        <div style="padding:0.5rem 0 0.6rem;border-bottom:1px solid #1C2E4A;margin-bottom:0.7rem;">
+            <div style="font-family:'Inter Tight',sans-serif;font-size:1.15rem;font-weight:800;color:#DDE8F8;line-height:1;letter-spacing:-0.01em;">Swipe Atlas</div>
+            <div style="font-size:0.68rem;color:#4A6180;margin-top:0.2rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">ML Engagement Dashboard</div>
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Nav ──
-        st.markdown('<span class="section-label">Navigation</span>', unsafe_allow_html=True)
+        # ── Nav (no visible label — CSS hides widget label; empty string avoids "Navigate" showing) ──
         section = st.radio(
-            "Navigate",
+            "",
             ["Overview", "Predict", "Evidence", "Segments"],
             format_func=lambda x: {
                 "Overview": "▣   Overview",
@@ -711,11 +724,18 @@ def main() -> None:
     df = load_data()
     section = render_sidebar()
 
-    # Page header
-    st.markdown("""
-    <div style="display:flex;align-items:baseline;gap:0.8rem;margin-bottom:0.5rem;">
-        <span style="font-family:'Inter Tight',sans-serif;font-size:1.9rem;font-weight:800;color:#DDE8F8;">Swipe Atlas</span>
-        <span style="font-size:0.82rem;color:#4A6180;font-weight:500;">Engagement Prediction · User Segmentation · Model Evidence</span>
+    # Compact breadcrumb — no duplicate "Swipe Atlas" title, saves vertical space
+    _section_labels = {
+        "Overview": "Project Overview",
+        "Predict":  "Engagement Prediction",
+        "Evidence": "Model Evidence",
+        "Segments": "User Segmentation",
+    }
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.65rem;padding-bottom:0.55rem;border-bottom:1px solid #1C2E4A;">
+        <span style="font-size:0.7rem;color:#4A6180;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;">Swipe Atlas</span>
+        <span style="color:#1C2E4A;font-size:0.85rem;line-height:1;">›</span>
+        <span style="font-size:0.7rem;color:#7E99C0;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;">{_section_labels.get(section, section)}</span>
     </div>
     """, unsafe_allow_html=True)
 
