@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from textwrap import dedent
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -969,7 +970,8 @@ def tab_analysis(df: pd.DataFrame) -> None:
 
     # ── Section 3: Engineered Features ───────────────────────────────────────
     st.markdown('<span class="section-label">Features We Engineered</span>', unsafe_allow_html=True)
-    st.markdown("""
+    if False:
+        st.markdown("\n".join(line.lstrip() for line in dedent("""
     <p style="font-size:0.85rem;color:var(--txt2);margin-bottom:1rem;">
     We added 6 behavioural features on top of the 25 raw columns. None improved CV R² —
     confirming the absence of signal rather than a feature-engineering gap.
@@ -1047,7 +1049,66 @@ def tab_analysis(df: pd.DataFrame) -> None:
         Blue = profile / behaviour flags &nbsp;·&nbsp; Amber = ratio / efficiency features.
         All 6 excluded the active target from their denominators to prevent leakage.
     </p>
-    """, unsafe_allow_html=True)
+    """).strip().splitlines()), unsafe_allow_html=True)
+
+    st.write(
+        "We added 6 behavioural features on top of the 25 raw columns. "
+        "None improved CV R^2, confirming the absence of signal rather "
+        "than a feature-engineering gap."
+    )
+
+    feature_cards = [
+        (
+            "bio_effort",
+            "bio_length x profile_pics_count",
+            "Profile completeness proxy: users who write more and upload more photos may signal higher intent.",
+            "Profile / behaviour flag",
+        ),
+        (
+            "night_user",
+            "last_active_hour >= 22 or <= 4 -> 1",
+            "Binary flag for late-night activity: different usage patterns might correlate with match behaviour.",
+            "Profile / behaviour flag",
+        ),
+        (
+            "emoji_heavy",
+            "emoji_usage_rate > 0.5 -> 1",
+            "Communication style flag: heavy emoji use may indicate a more expressive, approachable persona.",
+            "Profile / behaviour flag",
+        ),
+        (
+            "likes_per_usage_min",
+            "likes_received / app_usage_time_min",
+            "Engagement efficiency: likes earned per minute of app use, normalising for session length.",
+            "Ratio / efficiency feature",
+        ),
+        (
+            "messages_per_match",
+            "message_sent_count / mutual_matches",
+            "Conversation rate: how many messages a user sends per match, capturing follow-through behaviour.",
+            "Ratio / efficiency feature",
+        ),
+        (
+            "match_yield_from_likes",
+            "mutual_matches / likes_received",
+            "Conversion rate: what fraction of incoming likes turn into mutual matches.",
+            "Ratio / efficiency feature",
+        ),
+    ]
+
+    for start in range(0, len(feature_cards), 3):
+        cols = st.columns(3)
+        for col, (name, formula, description, feature_type) in zip(cols, feature_cards[start:start + 3]):
+            with col.container(border=True):
+                st.markdown(f"**{name}**")
+                st.code(formula, language=None)
+                st.caption(feature_type)
+                st.write(description)
+
+    st.caption(
+        "Profile / behaviour flags and ratio / efficiency features all excluded "
+        "the active target from their denominators to prevent leakage."
+    )
 
     st.divider()
 
